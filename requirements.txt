@@ -1,0 +1,4 @@
+nicegui
+# pytest # install 后， 导致 run 的时候默认变成了 test 运行？
+selenium
+niceguiToolkit
