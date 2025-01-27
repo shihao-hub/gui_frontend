@@ -1,4 +1,7 @@
 """
+### Tips
+1.
+
 ### 随笔
 1. 在我看来，nicegui 适合一些非专业人士快速原型开发甚至就是直接实现某个功能。
 
@@ -28,6 +31,15 @@
    - java web
 
    工作内容也不过是和业务强相关的牛马工作罢了。
+4. gui_frontend 项目应该有自己的虚拟环境。
+
+   怎么说呢，想表达的是，由于第三方库之间可能因为依赖问题导致相互冲突，所以项目如果不需要依赖，就没必要依赖了。
+
+   gui_frontend 和 gui_backend 相互隔离是最佳选择！（微服务思想？）
+5. nicegui 是一个轻量级框架，根本没必要用它来做复杂项目，虽然理论上应该是可以的，但是何必为难自己？
+6. nicegui 是基于 Vue 的！
+7. niceGui 是一个轻量级的 Python 前端框架，旨在简化用户界面的创建。它侧重于提供简单、直观的界面，特别适用于小型项目和快速原型设计。
+8.
 
 100. 参考资料
 - [python做界面，为什么我会强烈推荐nicegui](https://cloud.tencent.com/developer/article/2321324)
@@ -54,6 +66,8 @@ def main():
     # 基于 nicegui 的一个小工具库
     # inject_layout_tool(ide="pycharm", language_locale="zh")
 
+    todolist = ui.input("TODO: 原型设计图")
+    todolist = ui.input("TODO: 原型设计图")
     todolist = ui.input("TODO: 原型设计图")
     input_field = ui.input("请输入你的名字")
     label = ui.label("欢迎使用 NiceGUI!")
@@ -82,4 +96,5 @@ def main():
     ui.run(host="localhost", port=8889, reload=False, show=False)
 
 
-main()
+if __name__ in {"__main__", "__mp_main__"}:
+    main()
