@@ -490,13 +490,13 @@ def get_first_non_empty_line():
 
 def main():
     # python ag_frontend
-    if getattr(sys, 'frozen', False):
-        # 是打包的应用
-        print("打包应用的路径:", sys.executable)
-        os.system("python ./ag_frontend.exe")
-    else:
-        # 是未打包的应用
-        print("未打包应用的路径:", os.path.realpath(__file__))
+    # if getattr(sys, 'frozen', False):
+    #     # 是打包的应用
+    #     print("打包应用的路径:", sys.executable)
+    #     os.system("ag_frontend.exe")
+    # else:
+    #     # 是未打包的应用
+    #     print("未打包应用的路径:", os.path.realpath(__file__))
 
 
     # main 是主函数，main 用到的函数我认为可以不加 _，因为 _ 实在太丑了。当然，如果在类中，那最好还是加吧。
