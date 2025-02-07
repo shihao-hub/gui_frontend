@@ -493,7 +493,7 @@ def main():
     if getattr(sys, 'frozen', False):
         # 是打包的应用
         print("打包应用的路径:", sys.executable)
-        os.system("python ../ag_frontend.py")
+        os.system("python ./ag_frontend.exe")
     else:
         # 是未打包的应用
         print("未打包应用的路径:", os.path.realpath(__file__))
