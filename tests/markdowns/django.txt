@@ -1,0 +1,29 @@
+## django 入门与深入学习
+### 题外话
+这份文档存在的目的是将 django 的快速使用记录下来，
+人的记忆终究是有限的，从 0 搭建一个 django 项目几乎又记不清了。
+笔记的作用大概体现在此处吧？而且还能训练个人的总结能力。
+
+联想：技术皮皮虾有个 ai 知识库视频，值得利用。
+
+### 参考资料
+1. [Django REST framework 中文文档](https://q1mi.github.io/Django-REST-framework-documentation/)
+2. [Django REST Framework教程](https://www.django.cn/course/course-3.html)
+3. [Django REST framework](https://www.django-rest-framework.org/)
+4. [django](https://docs.djangoproject.com/zh-hans/5.1/intro/)
+5. [Django Ninja 官方文档](https://django-ninja.cn/)
+
+### django
+
+
+### django-rest-framework
+
+
+### django-ninja
+质疑 django，理解 django，成为 django。类似 flask、fastapi 框架都适用于这句话。
+在 Python Web 开发并非个人主业的情况下，单纯使用 django 可以解决 100% 的问题。
+对于那些对 Web 开发有丰富经验的人来说，反倒会被大型框架所拖累，这时候轻量级框架将派上用场。
+各种中间件可以又他自己封装，自由度和灵活度大大提升。
+
+虽然本人在使用 django-ninja 的过程中感受到一点别扭，但是 django-ninja 是绝对值得后续使用的，
+根本不需要去了解或者使用 fastapi！人的精力是有限的，django 已经完全足够了。

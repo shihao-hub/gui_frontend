@@ -1,0 +1,24 @@
+{
+  "name": "electron-api-docs-app",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder"
+  },
+  "build": {
+    "appId": "com.example.api_docs_app",
+    "win": {
+      "target": "nsis"
+    }
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "electron": "^34.0.1",
+    "electron-packager": "^17.1.2",
+    "electron-winstaller": "^5.4.0"
+  }
+}
