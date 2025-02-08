@@ -3,11 +3,13 @@
 - 提供给 main.py 调用的两个 POST 接口，一个用于更新 问，一个用于更新 答
 
 """
-
+import functools
 import io
 import pprint
+import re
 import tracemalloc
-from typing import Optional
+from types import SimpleNamespace
+from typing import Optional, TypedDict
 from uuid import uuid4
 
 import aiohttp
@@ -18,7 +20,7 @@ from nicegui.element import Element
 from fastapi import Request
 from pydantic import BaseModel
 
-from projects.ag import shared_config
+from projects.ag import configs
 
 tracemalloc.start()
 
@@ -35,10 +37,22 @@ def push_log(log, message: str):
     log_output.close()
 
 
+def catch_unexpected_exception(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except Exception as e:
+            return 500, {"message": f"Error: {e}"}
+
+    return wrapper
+
+
 # @ui.page('/')
 def main():
     client_id = str(uuid4())
-    print(f"{client_id}: OPENAI_API_KEY: {OPENAI_API_KEY}")
+
+    # print(f"{client_id}: OPENAI_API_KEY: {OPENAI_API_KEY}")
 
     class RefreshQuestionRequest(BaseModel):
         question: str
@@ -61,54 +75,54 @@ def main():
         print(f"response_message: {response_message2}")
 
     class RefreshQuestionAnswerRequest(BaseModel):
-        question: str
-        content: str
+        question: Optional[str] = ""
+        content: Optional[str] = ""
+
+    class RefreshQuestionAnswerRefType(TypedDict):
+        response_message: Optional[Element]
+        spinner: Optional[Element]
+
+    refresh_question_answer_ref: RefreshQuestionAnswerRefType = {
+        "response_message": None,
+        "spinner": None,
+    }
 
     @app.post("/api/refresh_question_answer")
+    @catch_unexpected_exception
     def refresh_question_answer(request: Request, data: RefreshQuestionAnswerRequest):
-        print("enter refresh_answer")
+        ref = refresh_question_answer_ref
 
-        # nonlocal response_message2, spinner2
-        #
-        # print(f"response_message2: {response_message2}")
-        # response_message2.clear()
-        # with response_message2:
-        #     ui.markdown(data.content)
-        # ui.run_javascript('window.scrollTo(0, document.body.scrollHeight)')
-        # print(f"spinner2: {spinner2}")
-        # message_container.remove(spinner2)
+        print(f"question: {bool(data.question)}, content: {bool(data.content)}")
 
-        with message_container:
-            ui.chat_message(text=data.question, name='You', sent=True)
-            response_message = ui.chat_message(name='Bot', sent=False)
-            spinner = ui.spinner(type='dots')
+        if data.question:
+            with message_container:
+                ui.chat_message(text=data.question.strip(), name='You', sent=True)
+                response_message = ui.chat_message(name='Bot', sent=False)
+                spinner = ui.spinner(type='dots')
+                ui.run_javascript('window.scrollTo(0, document.body.scrollHeight)')
+                ref["response_message"] = response_message
+                ref["spinner"] = spinner
+        elif data.content:
+            response_message = ref["response_message"]
+            spinner = ref["spinner"]
 
-        response_message.clear()
-        with response_message:
-            ui.markdown(data.content)
-            ui.run_javascript('window.scrollTo(0, document.body.scrollHeight)')
-        message_container.remove(spinner)
+            try:
+                response_message.clear()
+                with response_message:
+                    content = data.content
+                    pattern = re.compile(r"<think>.*</think>", re.S)
+                    match = pattern.match(content)
+                    if match:
+                        end = match.span()[1]
+                        content = content[:end] + "\n\n---\n\n" + content[end:]
+                    ui.markdown(content)
+                    ui.run_javascript('window.scrollTo(0, document.body.scrollHeight)')
+                message_container.remove(spinner)
+            finally:
+                ref["response_message"] = None
+                ref["spinner"] = None
 
-    class RefreshQuestionAnswerRequest2(BaseModel):
-        question: str
-        answer: str
-
-    @app.post("/api/refresh_question_answer2")
-    async def refresh_question_answer2(request: Request, data: RefreshQuestionAnswerRequest2):
-        print("enter refresh_question_answer", flush=True)
-
-        with message_container:
-            ui.chat_message(text=data.question, name='You', sent=True)
-            response_message = ui.chat_message(name='Bot', sent=False)
-            spinner = ui.spinner(type='dots')
-
-        response_message.clear()
-        with response_message:
-            ui.markdown(data.content)
-            await ui.run_javascript('window.scrollTo(0, document.body.scrollHeight)')
-        message_container.remove(spinner)
-
-        print(1111111111111111111111111111111)
+        return 200
 
     async def send() -> None:
         question = text.value
@@ -121,7 +135,8 @@ def main():
 
         # 调用 问答 接口
         async with aiohttp.ClientSession() as session:
-            async with session.get(shared_config.SERVER_BASE_URL + "/hello", params={"question": question}) as response:
+            async with session.post(configs.SERVER_BASE_URL + "/api/invoke_ai_api",
+                                    json={"question": question}) as response:
                 print(response)
                 # response_message.clear()
                 # with response_message:
@@ -153,10 +168,11 @@ def main():
         ui.markdown('simple chat app built with [NiceGUI](https://nicegui.io)') \
             .classes('text-xs self-end mr-8 m-[-1em] text-primary')
 
-    print(pprint.pformat([e.path for e in app.routes]))
+    # print(pprint.pformat([e.path for e in app.routes]))
     # await ui.context.client.connected()
-    ui.notify("client connected")
+    # ui.notify("client connected")
 
 
 main()
-ui.run(title='Chat with GPT-3 (example)', host="0.0.0.0", port=9000, reload=False, show=False)  # localhost
+
+ui.run(title="Chat with DeepSeek-R1", host="localhost", port=configs.CLIENT_PORT, reload=False, show=False)  # localhost
