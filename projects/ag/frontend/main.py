@@ -93,6 +93,7 @@ def main():
         print(f"response_message: {response_message2}")
 
     class RefreshQuestionAnswerRequest(BaseModel):
+        # question: 有默认值 和 Optional 哪个会校验？这个 stream 调用方没传入居然不会出问题？
         question: Optional[str] = ""
         content: Optional[str] = ""
         stream: bool = False
