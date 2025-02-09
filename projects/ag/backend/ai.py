@@ -80,6 +80,8 @@ class AiApi:
 
             output = line.decode("utf-8")
             content.append(output)
+            # 试图模拟流数据
+            # future = self.thread_pool.submit(lambda: refresh_question_answer({"stream": True, "content": output}))
 
             if self.settings.PRINT_IN_ONE_BREATH:
                 continue

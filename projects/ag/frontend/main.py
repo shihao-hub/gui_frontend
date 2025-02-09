@@ -95,14 +95,17 @@ def main():
     class RefreshQuestionAnswerRequest(BaseModel):
         question: Optional[str] = ""
         content: Optional[str] = ""
+        stream: bool = False
 
     class RefreshQuestionAnswerRefType(TypedDict):
         response_message: Optional[Element]
         spinner: Optional[Element]
+        markdown: Optional[Element]
 
     refresh_question_answer_ref: RefreshQuestionAnswerRefType = {
         "response_message": None,
         "spinner": None,
+        "markdown": None,
     }
 
     @app.post("/api/refresh_question_answer")
@@ -110,7 +113,9 @@ def main():
     def refresh_question_answer(request: Request, data: RefreshQuestionAnswerRequest):
         ref = refresh_question_answer_ref
 
-        print(f"question: {bool(data.question)}, content: {bool(data.content)}")
+        print(f"question: {bool(data.question)}, "
+              f"content: {bool(data.content)}, "
+              f"stream: {bool(data.stream)}")
 
         if data.question:
             with message_container:
@@ -121,10 +126,10 @@ def main():
                 ref["response_message"] = response_message
                 ref["spinner"] = spinner
         elif data.content:
-            response_message = ref["response_message"]
-            spinner = ref["spinner"]
-
             try:
+                response_message = ref["response_message"]
+                spinner = ref["spinner"]
+
                 response_message.clear()
                 with response_message:
                     content = data.content
@@ -133,13 +138,21 @@ def main():
                     if match:
                         end = match.span()[1]
                         content = content[:end] + "\n\n---\n\n" + content[end:]
-                    ui.markdown(content)
+                    markdown = ui.markdown(content)
+                    ref["markdown"] = markdown
                     ui.run_javascript('window.scrollTo(0, document.body.scrollHeight)')
                 message_container.remove(spinner)
             finally:
                 ref["response_message"] = None
                 ref["spinner"] = None
+        elif data.stream:
+            try:
+                markdown = ref["markdown"]
 
+                markdown.content = markdown.content + "\n" + data.content
+                markdown.update()
+            finally:
+                ref["markdown"] = None
         return 200
 
     async def invoke_ai_api(question: str) -> ClientResponse:
@@ -173,14 +186,14 @@ def main():
         #     spinner = ui.spinner(type='dots')
 
         # 调用 问答 接口
-        async with invoke_ai_api(question) as response:
-            print(response)
-            # response_message.clear()
-            # with response_message:
-            #     content = await response.content.read()
-            #     ui.markdown(content.decode("utf-8"))
-            #     await ui.run_javascript('window.scrollTo(0, document.body.scrollHeight)')
-            # message_container.remove(spinner)
+        response = await invoke_ai_api(question)
+        print(response)
+        # response_message.clear()
+        # with response_message:
+        #     content = await response.content.read()
+        #     ui.markdown(content.decode("utf-8"))
+        #     await ui.run_javascript('window.scrollTo(0, document.body.scrollHeight)')
+        # message_container.remove(spinner)
 
     ui.add_css(r'a:link, a:visited {color: inherit !important; text-decoration: none; font-weight: 500}')
 
