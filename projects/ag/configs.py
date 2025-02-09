@@ -1,3 +1,6 @@
+SERVER_HOST = "localhost"
+CLIENT_HOST = "0.0.0.0"  # localhost
+
 SERVER_PORT = 11111
 CLIENT_PORT = 11110
 

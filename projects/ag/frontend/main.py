@@ -3,26 +3,7 @@
 - 提供给 main.py 调用的两个 POST 接口，一个用于更新 问，一个用于更新 答
 
 """
-import functools
-import io
-import pprint
-import re
-import tracemalloc
-from types import SimpleNamespace
-from typing import Optional, TypedDict
-from uuid import uuid4
-
-import aiohttp
-from loguru import logger
-
-from nicegui import ui, app
-from nicegui.element import Element
-from fastapi import Request
-from pydantic import BaseModel
-
-from projects.ag import configs
-
-tracemalloc.start()
+from aiohttp import ClientResponse
 
 
 def bat_setup():
@@ -36,6 +17,30 @@ def bat_setup():
 
 
 bat_setup()
+
+import functools
+import io
+import pprint
+import re
+import tracemalloc
+from types import SimpleNamespace
+from typing import Optional, TypedDict, Dict
+from uuid import uuid4
+
+import aiohttp
+from loguru import logger
+
+from nicegui import ui, app
+from nicegui.element import Element
+from nicegui.events import GenericEventArguments
+from fastapi import Request
+from pydantic import BaseModel
+
+# todo: projects 找不到
+# todo: python + docker
+from projects.ag import configs
+
+tracemalloc.start()
 
 log_output = io.StringIO()
 logger.remove()
@@ -137,9 +142,30 @@ def main():
 
         return 200
 
-    async def send() -> None:
+    async def invoke_ai_api(question: str) -> ClientResponse:
+        url = configs.SERVER_BASE_URL + "/api/invoke_ai_api"
+        async with aiohttp.ClientSession() as session:
+            async with session.post(url, json={"question": question}) as response:
+                # todo: 超时怎么办
+                return response
+
+    async def send(event: GenericEventArguments) -> None:
+        key_event: Dict = event.args
+        # print(type(key_event))
+        # print(key_event)
+
+        if key_event.get("key") != "Enter":
+            return
+
+        # enter 发送，ctrl + enter 换行
+        if not key_event.get("ctrlKey"):
+            text.value += "\n"
+            text.update()
+            return
+
         question = text.value
-        text.value = ''
+
+        text.value = ""
 
         # with message_container:
         #     ui.chat_message(text=question, name='You', sent=True)
@@ -147,16 +173,14 @@ def main():
         #     spinner = ui.spinner(type='dots')
 
         # 调用 问答 接口
-        async with aiohttp.ClientSession() as session:
-            async with session.post(configs.SERVER_BASE_URL + "/api/invoke_ai_api",
-                                    json={"question": question}) as response:
-                print(response)
-                # response_message.clear()
-                # with response_message:
-                #     content = await response.content.read()
-                #     ui.markdown(content.decode("utf-8"))
-                #     await ui.run_javascript('window.scrollTo(0, document.body.scrollHeight)')
-                # message_container.remove(spinner)
+        async with invoke_ai_api(question) as response:
+            print(response)
+            # response_message.clear()
+            # with response_message:
+            #     content = await response.content.read()
+            #     ui.markdown(content.decode("utf-8"))
+            #     await ui.run_javascript('window.scrollTo(0, document.body.scrollHeight)')
+            # message_container.remove(spinner)
 
     ui.add_css(r'a:link, a:visited {color: inherit !important; text-decoration: none; font-weight: 500}')
 
@@ -176,8 +200,8 @@ def main():
         with ui.row().classes('w-full no-wrap items-center'):
             placeholder = 'message' if OPENAI_API_KEY != 'not-set' else \
                 'Please provide your OPENAI key in the Python script first!'
-            text = ui.input(placeholder=placeholder).props('rounded outlined input-class=mx-3') \
-                .classes('w-full self-center').on('keydown.enter', send)  # send | lambda: ...
+            text = ui.textarea(placeholder=placeholder).props('rounded outlined input-class=mx-3') \
+                .classes('w-full self-center').on('keydown', send)  # send | lambda: ...
         ui.markdown('simple chat app built with [NiceGUI](https://nicegui.io)') \
             .classes('text-xs self-end mr-8 m-[-1em] text-primary')
 
@@ -188,4 +212,8 @@ def main():
 
 main()
 
-ui.run(title="Chat with DeepSeek-R1", host="localhost", port=configs.CLIENT_PORT, reload=False, show=False)  # localhost
+ui.run(title="Chat with DeepSeek-R1",
+       host=configs.CLIENT_HOST,
+       port=configs.CLIENT_PORT,
+       reload=False,
+       show=False)
