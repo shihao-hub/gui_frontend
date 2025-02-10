@@ -1,1 +1,1 @@
-from projects.nicegui_start_project.nicegui_start_project.pages.components.todolists import todolists
+from pages.components.todolists import todolists
