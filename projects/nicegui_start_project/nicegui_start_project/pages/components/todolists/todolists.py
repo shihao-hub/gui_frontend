@@ -3,9 +3,10 @@ __all__ = ["PAGE_TITLE", "PAGE_PATH"]
 from nicegui import ui, app
 from fastapi.responses import HTMLResponse
 
-from projects.nicegui_start_project.src.utils import get_random_port, read_html, read_html_head, read_html_body
-from projects.nicegui_start_project.src.settings import SOURCE_DIR
+from nicegui_start_project.settings import SOURCE_DIR
+from nicegui_start_project.utils import read_html_head, read_html_body, read_html, get_random_port
 
+# constants
 PAGE_TITLE = "待办事项"
 PAGE_PATH = "/pages/components/todolists"
 HTML_PATH = f"{SOURCE_DIR}/pages/components/todolists/todolists.html"

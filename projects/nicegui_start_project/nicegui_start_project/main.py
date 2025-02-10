@@ -2,13 +2,11 @@ import importlib
 from typing import List
 
 from nicegui import ui
-from projects.nicegui_start_project.src.pages import components
+from pages import components
+from nicegui_start_project.settings import HOST, PORT, BASE_URL
+
 
 # importlib.import_module("projects.nicegui_start_project.src.pages.components.todolists.todolists")
-
-HOST = "localhost"
-PORT = 12000
-BASE_URL = f"http://{HOST}:{PORT}/"  # NOQA
 
 
 def url_join(snippets: List[str]) -> str:
@@ -22,7 +20,8 @@ def main():
                 continue
             module = getattr(components, name)
             if hasattr(module, "PAGE_TITLE") and hasattr(module, "PAGE_PATH"):
-                ui.link(getattr(module, "PAGE_TITLE"), url_join([BASE_URL, getattr(module, "PAGE_PATH")]))
+                link = ui.link(getattr(module, "PAGE_TITLE"), url_join([BASE_URL, getattr(module, "PAGE_PATH")]))
+                link.props(""" target="_blank" """)
 
 
 if __name__ == '__main__':
