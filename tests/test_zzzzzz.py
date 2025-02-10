@@ -1,24 +1,23 @@
-import markdown
 from nicegui import ui
 
-md_text = '''
-# 这是标题
+# 创建一个共享的输入框
+input_value = ui.input(placeholder='Type Here...')
 
-这是一个段落，**带有加粗文本** 和 *斜体文本*。
 
-- 列表项 1
-- 列表项 2
-- 列表项 3
+@ui.page("/home")
+def home_page():
+    ui.label('Home Page')
+    ui.label('Current Input: ')
+    ui.label(input_value.value)  # 显示输入框的当前值
+    ui.button('Go to About Page', on_click=lambda: ui.navigate.to('about'))
 
-```python
-def hello():
-    pass
-```
-'''
 
-# 使用 markdown 库将 Markdown 转换为 HTML
-# html_content = markdown.markdown(md_text)
-html_content = md_text
+@ui.page("/about")
+def about_page():
+    ui.label('About Page')
+    ui.label('Input from Home Page: ')
+    ui.label(input_value.value)  # 显示输入框的当前值
+    ui.button('Back to Home', on_click=lambda: ui.navigate.to('home'))
 
-ui.markdown(html_content)
+
 ui.run()
