@@ -2,11 +2,13 @@ __all__ = [
     "ThreadPool",
 
     "get_random_port",
+    "sync_to_async",
     "read_html",
     "read_html_head",
     "read_html_body",
 ]
 
+import asyncio
 import functools
 import os.path
 import re
@@ -26,14 +28,25 @@ class ThreadPool:
             cls._instance = super(ThreadPool, cls).__new__(cls)
         return cls._instance
 
-    def __init__(self, max_workers=1):
+    def __init__(self, max_workers=3):
         self._pool = futures.ThreadPoolExecutor(max_workers=max_workers)
+
+    def get_pool(self) -> futures.ThreadPoolExecutor:
+        return self._pool
 
     def submit(self, fn, /, *args, **kwargs):
         return self._pool.submit(fn, *args, **kwargs)
 
     def shutdown(self, wait=True, *, cancel_futures=False):
         self._pool.shutdown(wait=wait, cancel_futures=cancel_futures)
+
+
+async def sync_to_async(func, *args, **kwargs):
+    def sync_code():
+        return func(*args, **kwargs)
+
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(ThreadPool().get_pool(), sync_code)
 
 
 def _is_port_in_use(port: int) -> bool:

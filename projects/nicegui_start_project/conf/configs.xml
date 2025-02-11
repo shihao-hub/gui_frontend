@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<configuration>
+    <settings>
+        <setting>
+            <name>HOST</name>
+            <value>localhost</value>
+        </setting>
+        <setting>
+            <name>PORT</name>
+            <value>12000</value>
+        </setting>
+    </settings>
+</configuration>
