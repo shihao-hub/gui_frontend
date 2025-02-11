@@ -1,5 +1,3 @@
-__all__ = ["PAGE_TITLE", "PAGE_PATH"]
-
 from nicegui import ui, app
 from fastapi.responses import HTMLResponse
 
