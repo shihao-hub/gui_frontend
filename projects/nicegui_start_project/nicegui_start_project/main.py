@@ -2,11 +2,14 @@ import importlib
 from typing import List
 
 from nicegui import ui
+
 from pages import components
 from nicegui_start_project.settings import HOST, PORT, BASE_URL
-
+from apps.api.routers import register_routers
 
 # importlib.import_module("projects.nicegui_start_project.src.pages.components.todolists.todolists")
+
+register_routers()
 
 
 def url_join(snippets: List[str]) -> str:
@@ -26,4 +29,4 @@ def main():
 
 if __name__ == '__main__':
     main()
-    ui.run(host=HOST, port=PORT, reload=False, show=False)
+    ui.run(host=HOST, port=PORT, reload=False, show=False, favicon="🚀")
