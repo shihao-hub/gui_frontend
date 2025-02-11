@@ -65,13 +65,24 @@ def add_element(container: Element, file: File, content: BinaryIO = None) -> Non
             async def delete_on_click():
                 res = await sync_to_async(lambda: File.objects(id=file.id).delete())
                 print(type(res), res)
+
+                def delete_file():
+                    # todo: nfs_service 应新增删除接口
+                    pass
+
+                await sync_to_async(delete_file)
                 row.delete()
 
             async def download_on_click():
                 ui.download(f"{PAGE_PATH}/download?uid={file.filepath}")
 
+            async def render_on_click():
+                # todo: <div id="render_canvas"></div> 渲染图片
+                pass
+
             ui.button("delete", on_click=delete_on_click)
             ui.button("download", on_click=download_on_click)
+            ui.button("render",on_click=render_on_click)
 
 
 @app.get(f"{PAGE_PATH}/download")
@@ -83,7 +94,15 @@ async def download(uid: str):
 async def file_storage():
     async def on_upload(event: UploadEventArguments):
         filepath = await to_upload_file(event.name, event.content)
-        data = dict(filename=event.name, filepath=filepath)
+
+        def iife_get_filesize():
+            binary_file = event.content
+            binary_file.seek(0, 2)  # 移动到文件末尾
+            filesize = binary_file.tell()  # 获取字节数
+            binary_file.seek(0)  # 移动文件指针回到开始
+            return filesize
+
+        data = dict(filename=event.name, filepath=filepath, filesize=iife_get_filesize())
         res: File = await sync_to_async(lambda: File.objects.create(**data))
         print(type(res), res)
 
