@@ -7,7 +7,9 @@ __all__ = [
 
 import asyncio
 import io
+import os
 import pprint
+import subprocess
 import traceback
 from typing import Dict, TypedDict, Optional, Any, BinaryIO
 
@@ -36,6 +38,23 @@ def get_users(body: GetUsersBody):
 
 class UploadFileResponse(TypedDict):
     uid: str
+
+
+def _check_port_listening(port):
+    """ 通过系统命令快速检测（Linux/Windows 兼容） """
+
+    def is_port_listening():
+        try:
+            # Linux 使用 netstat，Windows 使用 netstat
+            cmd = ["netstat", "-tuln"] if not os.name == "nt" else ["netstat", "-ano"]
+            result = subprocess.run(cmd, capture_output=True, text=True)
+            return f":{port} " in result.stdout
+        except Exception as e:
+            print(f"Error: {e}")
+            return False
+
+    if not is_port_listening():
+        raise RuntimeError(f"Port {port} is not listening.")
 
 
 async def upload_file(filename: str, content: BinaryIO) -> UploadFileResponse:
@@ -79,12 +98,14 @@ async def download_file(uid: str):
 
 
 if __name__ == '__main__':
-    async def main():
-        with open("./settings.py", "rb") as f:
-            res = await upload_file(io.BytesIO(f.read()))
-        print(res)
-        res = await download_file(res["uid"])
-        print(res)
+    # async def main():
+    #     with open("./settings.py", "rb") as f:
+    #         res = await upload_file("default.py", io.BytesIO(f.read()))
+    #     print(res)
+    #     res = await download_file(res["uid"])
+    #     print(res)
+    #
+    #
+    # asyncio.run(main())
 
-
-    asyncio.run(main())
+    print(_check_port_listening(12001))

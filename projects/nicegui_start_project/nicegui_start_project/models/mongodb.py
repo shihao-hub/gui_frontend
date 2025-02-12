@@ -1,3 +1,5 @@
+__all__ = ["File"]
+
 import mongoengine as engine
 
 DATABASE = "nicegui_start_project"

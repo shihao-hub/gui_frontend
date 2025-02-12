@@ -10,11 +10,14 @@ PAGE_PATH = "/pages/components/todolists"
 HTML_PATH = f"{SOURCE_DIR}/pages/components/todolists/todolists.html"
 
 
-# @app.get("/pages/components/todolists", response_class=HTMLResponse, tags=["todolists"])
-# async def todolists():
-#     return read_html(HTML_PATH)
+# question: 单纯一个 html 页面，ui.page 和 app.get 的区别是什么？
+
+@app.get("/pages/components/todolists", response_class=HTMLResponse, tags=["todolists"])
+async def todolists():
+    return read_html(HTML_PATH)
 
 
+"""
 @ui.page(PAGE_PATH)
 async def todolists():
     # note: ui.page 的 html 有默认设置，因此在这里添加会导致样式存在问题...
@@ -25,6 +28,7 @@ async def todolists():
     #       为什么这样说呢？是因为 nicegui 的 ui.label，ui.html 等元素是按顺序插入的。
     #       但是如果在 add_body_html 前面添加 ui.label，那么 ui.label 还是会出现在页面的最下面。这导致了页面布局混乱。
 
+"""
 
 if __name__ == '__main__':
     ui.run(host="localhost", port=get_random_port(10086), reload=False, show=False)
