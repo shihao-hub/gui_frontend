@@ -13,6 +13,7 @@ import functools
 import os.path
 import re
 import socket
+import time
 from concurrent import futures
 from typing import Optional, LiteralString, Literal
 
@@ -39,6 +40,99 @@ class ThreadPool:
 
     def shutdown(self, wait=True, *, cancel_futures=False):
         self._pool.shutdown(wait=wait, cancel_futures=cancel_futures)
+
+
+class SimpleCache:
+    """
+    ### **5. 性能优化方向**
+    - **定期清理**：后台线程定时执行 `clear_expired()`（需线程安全）。
+    - **内存优化**：使用 `__slots__` 减少对象内存开销。
+    - **序列化**：支持存储复杂对象（如通过 `pickle`）。
+    """
+
+    _instance = None
+
+    def __new__(cls, *args, **kwargs):
+        if not cls._instance:
+            cls._instance = super(SimpleCache, cls).__new__(cls)
+        return cls._instance
+
+    # 以下内容是 deepseek r1 的回答，很好用！
+    def __init__(self):
+        self._cache = {}
+
+    def set(self, key, value, expire_seconds=0):
+        """ 设置缓存（expire_seconds=0 表示永不过期） """
+        expire_ts = time.time() + expire_seconds if expire_seconds > 0 else 0
+        self._cache[key] = (value, expire_ts)  # note: 数组 or 具名数组
+
+    def get(self, key, default=None):
+        """ 获取缓存值，自动清理过期键 """
+        if key not in self._cache:
+            return default
+
+        value, expire_ts = self._cache[key]
+        if 0 < expire_ts < time.time():  # note: get 的时候尝试清理
+            del self._cache[key]
+            return default
+        return value
+
+    def clear_expired(self):
+        """ 手动清理所有过期键 """
+        now = time.time()
+        expired_keys = [
+            k for k, (_, ts) in self._cache.items()
+            if 0 < ts < now
+        ]
+        for k in expired_keys:
+            del self._cache[k]
+
+    def size(self):
+        """ 返回当前有效缓存数量 """
+        self.clear_expired()  # note: size 的时候清理
+        return len(self._cache)
+
+
+class LRUCache(SimpleCache):
+    """ 容量限制 """
+
+    def __init__(self, max_size=100):
+        super().__init__()
+        self.max_size = max_size
+        self._order = []
+
+    def set(self, key, value, expire_seconds=0): # 当前实现为简化版，实际 LRU 需在 **访问时更新顺序**
+        super().set(key, value, expire_seconds)  # note: super()
+        self._order.append(key)  # LRU: 删除最老的
+        if len(self._order) > self.max_size:
+            old_key = self._order.pop(0)
+            if old_key in self._cache:
+                del self._cache[old_key]
+
+
+def cached(expire_seconds=0):
+    """
+    Usage:
+        @cached(expire_seconds=10)
+        def heavy_calculation(x):
+            print("Computing...")
+            return x * x
+    """
+
+    def decorator(func):
+        cache = SimpleCache()
+
+        def wrapper(*args, **kwargs):
+            key = f"{func.__name__}-{args}-{kwargs}"
+            value = cache.get(key)
+            if value is None:
+                value = func(*args, **kwargs)
+                cache.set(key, value, expire_seconds)
+            return value
+
+        return wrapper
+
+    return decorator
 
 
 async def sync_to_async(func, *args, **kwargs):
