@@ -70,31 +70,43 @@ class SimpleCache:
         expire_ts = time.time() + expire_seconds if expire_seconds > 0 else 0
         self._cache[key] = (value, expire_ts)  # note: 数组 or 具名数组
 
+    def _is_expired(self, key):
+        if key not in self._cache:
+            return False
+
+        value = self._cache[key]
+        return 0 < value[1] < time.time()
+
     def get(self, key, default=None):
         """ 获取缓存值，自动清理过期键 """
         if key not in self._cache:
             return default
 
-        value, expire_ts = self._cache[key]
-        if 0 < expire_ts < time.time():  # note: get 的时候尝试清理
+        if self._is_expired(key):  # note: get 的时候尝试清理
             del self._cache[key]
             return default
-        return value
+        return self._cache[key]
 
-    def clear_expired(self):
+    # def clear_expired(self, key):
+    #     if self._is_expired(key):
+    #         del self._cache[key]
+
+    def clear_all_expired(self):
         """ 手动清理所有过期键 """
-        now = time.time()
-        expired_keys = [
-            k for k, (_, ts) in self._cache.items()
-            if 0 < ts < now
-        ]
-        for k in expired_keys:
+        expired_keys = [k for k in self._cache.keys() if self._is_expired(k)]
+        for k in expired_keys:  # note: 在遍历 dict.keys() 的时候不允许删除
             del self._cache[k]
 
     def size(self):
         """ 返回当前有效缓存数量 """
-        self.clear_expired()  # note: size 的时候清理
+        self.clear_all_expired()  # note: size 的时候清理
         return len(self._cache)
+
+    def __str__(self):
+        return f"size: {self.size()}, keys: {self._cache.keys()}"
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}()"
 
 
 class LRUCache(SimpleCache):
@@ -201,19 +213,30 @@ def read_html_body(filename: str) -> str:
 
 if __name__ == '__main__':
     # ThreadPool
-    class A:
+    def test_ThreadPool():  # NOQA
+        class A:
+            pass
+
+        print(A())
+        print(A())
+        print(A())
+        print(id(A()))
+        print(A() is A())
+        print(ThreadPool() is ThreadPool())
+        print(id(ThreadPool()), id(ThreadPool()))
+        assert id(ThreadPool()) == id(ThreadPool())  # 为什么始终成立？id 我记得是比较地址的呀... 《流畅的 Python》
+        assert ThreadPool() is ThreadPool()
+        # get_random_port
         pass
+        print(get_random_port(8080))
 
 
-    print(A())
-    print(A())
-    print(A())
-    print(id(A()))
-    print(A() is A())
-    print(ThreadPool() is ThreadPool())
-    print(id(ThreadPool()), id(ThreadPool()))
-    assert id(ThreadPool()) == id(ThreadPool())  # 为什么始终成立？id 我记得是比较地址的呀... 《流畅的 Python》
-    assert ThreadPool() is ThreadPool()
-    # get_random_port
-    pass
-    print(get_random_port(8080))
+    def test_Cache():  # NOQA
+        cache = SimpleCache()
+        assert cache is SimpleCache()
+        cache.set(1, 2)
+        print(cache)
+        print(repr(cache))
+
+
+    test_Cache()
