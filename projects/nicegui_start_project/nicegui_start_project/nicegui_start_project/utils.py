@@ -1,15 +1,11 @@
 __all__ = [
-    "ThreadPool",
+    "thread_pool",
 
     "cached",
-    "SimpleCache",
-    "LRUCache",
+    "simple_cache",
 
     "get_random_port",
     "sync_to_async",
-    "read_html",
-    "read_html_head",
-    "read_html_body",
 ]
 
 import asyncio
@@ -26,12 +22,13 @@ from loguru import logger
 
 # singleton thread pool
 class ThreadPool:
-    _instance = None
+    # _instance = None
 
-    def __new__(cls, *args, **kwargs):
-        if not cls._instance:
-            cls._instance = super(ThreadPool, cls).__new__(cls)
-        return cls._instance
+    # note: 这根本就不是单例，因为 __init__ 仍然会执行！
+    # def __new__(cls, *args, **kwargs):
+    #     if not cls._instance:
+    #         cls._instance = super(ThreadPool, cls).__new__(cls)
+    #     return cls._instance
 
     def __init__(self, max_workers=3):
         self._pool = futures.ThreadPoolExecutor(max_workers=max_workers)
@@ -58,14 +55,17 @@ class SimpleCache:
 
     def __new__(cls, *args, **kwargs):
         if not cls._instance:
+            print(222)
             cls._instance = super(SimpleCache, cls).__new__(cls)
+        print(333)
+        print("------")
         return cls._instance
 
     # 以下内容是 deepseek r1 的回答，很好用！
     def __init__(self):
         self._cache = {}
 
-    def set(self, key, value, expire_seconds=0):
+    def set(self, key, value, expire_seconds=0.0):
         """ 设置缓存（expire_seconds=0 表示永不过期） """
         expire_ts = time.time() + expire_seconds if expire_seconds > 0 else 0
         self._cache[key] = (value, expire_ts)  # note: 数组 or 具名数组
@@ -85,7 +85,7 @@ class SimpleCache:
         if self._is_expired(key):  # note: get 的时候尝试清理
             del self._cache[key]
             return default
-        return self._cache[key]
+        return self._cache[key][0]
 
     # def clear_expired(self, key):
     #     if self._is_expired(key):
@@ -103,27 +103,30 @@ class SimpleCache:
         return len(self._cache)
 
     def __str__(self):
-        return f"size: {self.size()}, keys: {self._cache.keys()}"
+        return f"size: {self.size()}, cache: {dict([(k, v[0]) for k, v in self._cache.items()])}"
 
     def __repr__(self):
         return f"{self.__class__.__name__}()"
 
 
-class LRUCache(SimpleCache):
-    """ 容量限制 """
+# class LRUCache(SimpleCache):
+#     """ 容量限制 """
+#
+#     def __init__(self, max_size=100):
+#         super().__init__()
+#         self.max_size = max_size
+#         self._order = []
+#
+#     def set(self, key, value, expire_seconds=0):  # 当前实现为简化版，实际 LRU 需在 **访问时更新顺序**
+#         super().set(key, value, expire_seconds)  # note: super()
+#         self._order.append(key)  # LRU: 删除最老的
+#         if len(self._order) > self.max_size:
+#             old_key = self._order.pop(0)
+#             if old_key in self._cache:
+#                 del self._cache[old_key]
 
-    def __init__(self, max_size=100):
-        super().__init__()
-        self.max_size = max_size
-        self._order = []
-
-    def set(self, key, value, expire_seconds=0):  # 当前实现为简化版，实际 LRU 需在 **访问时更新顺序**
-        super().set(key, value, expire_seconds)  # note: super()
-        self._order.append(key)  # LRU: 删除最老的
-        if len(self._order) > self.max_size:
-            old_key = self._order.pop(0)
-            if old_key in self._cache:
-                del self._cache[old_key]
+simple_cache = SimpleCache()
+thread_pool = ThreadPool()
 
 
 def cached(expire_seconds=0):
@@ -136,7 +139,7 @@ def cached(expire_seconds=0):
     """
 
     def decorator(func):
-        cache = SimpleCache()
+        cache = simple_cache
 
         def wrapper(*args, **kwargs):
             key = f"{func.__name__}-{args}-{kwargs}"
@@ -187,30 +190,6 @@ def get_random_port(port: Optional[int] = None) -> int:
         return s.getsockname()[1]
 
 
-# todo: cache 对接 redis（当然，还需要遵循 如非必要，勿增实体 的原则）
-# note: 注释掉的话，html 就可以视为配置文件了，刷新而不需要重启就可以更新 html 内容！
-# @functools.cache
-def read_html(filename: str) -> str:
-    with open(filename, "r", encoding="utf-8") as f:
-        return f.read()
-
-
-def _read_html_tag(filename: str, tag_name: Literal["head", "body"]) -> str:
-    content = read_html(filename)
-    pattern = re.compile(rf"<{tag_name}>(.*?)</{tag_name}>", re.DOTALL)
-    match = pattern.search(content)
-    assert match is not None
-    return match.group(1)
-
-
-def read_html_head(filename: str) -> str:
-    return _read_html_tag(filename, "head")
-
-
-def read_html_body(filename: str) -> str:
-    return _read_html_tag(filename, "body")
-
-
 if __name__ == '__main__':
     # ThreadPool
     def test_ThreadPool():  # NOQA
@@ -232,11 +211,19 @@ if __name__ == '__main__':
 
 
     def test_Cache():  # NOQA
-        cache = SimpleCache()
-        assert cache is SimpleCache()
-        cache.set(1, 2)
-        print(cache)
-        print(repr(cache))
+        cache = simple_cache
+
+        # assert cache is SimpleCache()
+        expired_time = 3.6
+        cache.set(1, 2, expired_time)
+        print(cache._cache)
+        # print(SimpleCache()._cache)
+        print(cache._cache)
+        # print(int(expired_time + 0.5))
+        # for i in range(int(expired_time + 0.5) + 1):
+        #     print(cache.get(1))
+        #     time.sleep(1)
+        # print(SimpleCache())
 
 
     test_Cache()
