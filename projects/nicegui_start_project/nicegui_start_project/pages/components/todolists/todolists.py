@@ -1,8 +1,11 @@
+import re
+from typing import Literal
+
 from nicegui import ui, app
 from fastapi.responses import HTMLResponse
 
 from nicegui_start_project.settings import SOURCE_DIR
-from nicegui_start_project.utils import read_html_head, read_html_body, read_html, get_random_port
+from nicegui_start_project.utils import get_random_port
 
 # constants
 PAGE_TITLE = "待办事项"
@@ -11,6 +14,31 @@ HTML_PATH = f"{SOURCE_DIR}/pages/components/todolists/todolists.html"
 
 
 # question: 单纯一个 html 页面，ui.page 和 app.get 的区别是什么？
+
+
+# todo: cache 对接 redis（当然，还需要遵循 如非必要，勿增实体 的原则）
+# note: 注释掉的话，html 就可以视为配置文件了，刷新而不需要重启就可以更新 html 内容！
+# @functools.cache
+def read_html(filename: str) -> str:
+    with open(filename, "r", encoding="utf-8") as f:
+        return f.read()
+
+
+def _read_html_tag(filename: str, tag_name: Literal["head", "body"]) -> str:
+    content = read_html(filename)
+    pattern = re.compile(rf"<{tag_name}>(.*?)</{tag_name}>", re.DOTALL)
+    match = pattern.search(content)
+    assert match is not None
+    return match.group(1)
+
+
+def read_html_head(filename: str) -> str:
+    return _read_html_tag(filename, "head")
+
+
+def read_html_body(filename: str) -> str:
+    return _read_html_tag(filename, "body")
+
 
 @app.get("/pages/components/todolists", response_class=HTMLResponse, tags=["todolists"])
 async def todolists():
