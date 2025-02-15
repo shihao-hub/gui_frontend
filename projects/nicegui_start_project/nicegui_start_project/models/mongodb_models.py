@@ -1,24 +1,30 @@
-__all__ = [
-    "Word",
-
-    "NotUniqueError"
-]
+__all__ = ["File", "Word"]
 
 import mongoengine as engine
-from loguru import logger
-from mongoengine.errors import NotUniqueError
 
-DATABASE = "word_notebook"
+from loguru import logger
+
+DATABASE = "nicegui_start_project"
 DATABASE_ALIAS = f"{DATABASE}_alias"
 
-engine.connect(db=DATABASE, alias=DATABASE_ALIAS)
+engine.connect(db=DATABASE, alias=DATABASE_ALIAS, host="localhost", port=27017)
+
+
+class File(engine.DynamicDocument):
+    filename = engine.StringField(required=True)
+    filepath = engine.StringField(required=True)
+    filesize = engine.IntField()
+
+    meta = dict(collection="files", db_alias=DATABASE_ALIAS)
+
+    objects: engine.queryset.queryset.QuerySet
 
 
 class Word(engine.DynamicDocument):
     word = engine.StringField(required=True, unique=True)  # unique=True -> NotUniqueError
     meaning = engine.StringField(required=True)
 
-    meta = dict(collection="words", db_alias=DATABASE_ALIAS)
+    meta = dict(collection="word_notebook__words", db_alias=DATABASE_ALIAS)
     objects: engine.queryset.queryset.QuerySet
 
     def clean(self):
@@ -53,10 +59,7 @@ class Word(engine.DynamicDocument):
 
 
 if __name__ == '__main__':
-    def main():
+    def test_Word():  # NOQA
         Word.drop_collection()
         word = Word(word="hello", meaning="world")
         word.save()
-
-
-    main()

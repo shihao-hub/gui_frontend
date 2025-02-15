@@ -40,6 +40,9 @@ async def scheduled_notification():
             async def on_click():
                 if date_label.text and time_label.text and event_input.value:
                     ui.notify(f"{date_label.text} {time_label.text}, {event_input.value}")
+                    # TODO: 存储到数据库中
+                    # Task { time: int, content: str, notify_number: int = 1 }
+                    # note: 设计的重要性，在实现某个需求的时候需要进行完整的需求设计、调研等。
 
             event_input = ui.input()
             event_input.on("keydown.enter", on_click)

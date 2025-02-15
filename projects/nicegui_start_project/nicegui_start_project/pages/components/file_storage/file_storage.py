@@ -23,7 +23,7 @@ from fastapi.responses import StreamingResponse
 
 from nicegui_start_project.utils import get_random_port, sync_to_async
 from nicegui_start_project.web_apis import upload_file as upload_file, download_file
-from models.mongodb import File
+from models.mongodb_models import File
 
 PAGE_TITLE = "文件存储"
 PAGE_PATH = "/pages/components/file_storage"

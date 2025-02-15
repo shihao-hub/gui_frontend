@@ -1,6 +1,6 @@
 import os
 
-from projects.nicegui_start_project.nicegui_start_project.models.mongodb import File
+from projects.nicegui_start_project.nicegui_start_project.models.mongodb_models import File
 
 files = File.objects.all()
 dirs_loc = os.listdir("../files")

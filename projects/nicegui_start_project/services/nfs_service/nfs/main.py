@@ -1,22 +1,72 @@
 import json
 import os.path
+import sys
 import uuid
+import yaml
 from pathlib import Path
 from typing import Dict
+
+from loguru import logger
 
 import uvicorn
 from fastapi import FastAPI, Query, File, UploadFile, HTTPException, status
 from fastapi.requests import Request
 from starlette.responses import StreamingResponse
 
-from nicegui_start_project.utils import get_random_port
-
-# todo: 如何做到支持 . .. 导入呢？
-
+# BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent
 NFS_BASE_DIR = Path(__file__).parent.parent
 NFS_SOURCE_DIR = Path(__file__).parent
 
 FILE_STORAGE_PATH = f"{NFS_BASE_DIR}/files"
+
+# 统一日志目录
+# LOG_DIR = Path(f"{BASE_DIR}/logs")
+LOG_DIR = Path(f"{NFS_BASE_DIR}/logs")
+LOG_DIR.mkdir(exist_ok=True)
+
+# 基础配置
+logger.configure(
+    handlers=[
+        # ----------------------------
+        # 控制台输出（开发环境详细）
+        # ----------------------------
+        {
+            "sink": sys.stderr,
+            "format": "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level: <8}</level> | <cyan>{module}:{line}</cyan> | <level>{message}</level>",
+            "level": "DEBUG",
+            "colorize": True,
+        },
+        # ----------------------------
+        # 文件输出（生产环境精简）
+        # ----------------------------
+        {
+            "sink": LOG_DIR / "app_{time:YYYY-MM-DD}.log",
+            "format": "{time:YYYY-MM-DD HH:mm:ss} | {level} | {module}:{line} | {message}",
+            "level": "INFO",
+            "rotation": "00:00",  # 每日轮转
+            "retention": "30 days",  # 保留30天
+            "compression": "zip",  # 自动压缩旧日志
+            "enqueue": True,  # 多进程安全
+            "encoding": "utf-8",
+        },
+        # ----------------------------
+        # 错误日志单独存储
+        # ----------------------------
+        {
+            "sink": LOG_DIR / "errors.log",
+            "format": "{time:YYYY-MM-DD HH:mm:ss} | {level} | {module}:{line} | {message}\n{exception}",
+            "level": "WARNING",
+            "retention": "60 days",
+            "enqueue": True,
+        }
+    ],
+    # 全局异常捕获（自动记录崩溃信息）
+    extra={"common_field": "app_log"},
+    activation=[("", True)],  # 启用所有模块日志
+)
+
+# todo: 如何做到支持 . .. 导入呢？
+
 
 app = FastAPI()
 
@@ -60,4 +110,5 @@ def download(request: Request, uid: str = Query(...)):
 
 
 if __name__ == '__main__':
+    logger.info("nfs service starts successfully.")
     uvicorn.run(app, host="localhost", port=12001, reload=False)
