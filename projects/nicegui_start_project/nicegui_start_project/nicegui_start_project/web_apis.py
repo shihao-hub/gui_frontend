@@ -22,6 +22,8 @@ from loguru import logger
 
 from fastapi.responses import StreamingResponse, Response
 
+from nicegui_start_project.utils import cached, simple_cache
+
 
 # 这个能不能这样？直接用 Schema/BaseModel 充当对象，实例化并校验和传递
 class GetUsersBodySchema(BaseModel):
@@ -40,24 +42,30 @@ class UploadFileResponse(TypedDict):
     uid: str
 
 
+@cached(expire_seconds=0)
+def _is_port_listening(port):
+    print("is_port_listening is_port_listening is_port_listening")
+    try:
+        # Linux 使用 netstat，Windows 使用 netstat
+        cmd = ["netstat", "-tuln"] if not os.name == "nt" else ["netstat", "-ano"]
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        return f":{port} " in result.stdout
+    except Exception as e:
+        print(f"Error: {e}")
+        return False
+
+
 def _check_port_listening(port):
     """ 通过系统命令快速检测（Linux/Windows 兼容） """
+    print(simple_cache)
 
-    def is_port_listening():
-        try:
-            # Linux 使用 netstat，Windows 使用 netstat
-            cmd = ["netstat", "-tuln"] if not os.name == "nt" else ["netstat", "-ano"]
-            result = subprocess.run(cmd, capture_output=True, text=True)
-            return f":{port} " in result.stdout
-        except Exception as e:
-            print(f"Error: {e}")
-            return False
-
-    if not is_port_listening():
+    if not _is_port_listening(port):
         raise RuntimeError(f"Port {port} is not listening.")
 
 
 async def upload_file(filename: str, content: BinaryIO) -> UploadFileResponse:
+    _check_port_listening(12001)
+
     url = "http://localhost:12001/api/upload"
 
     async def fetch() -> Dict:
@@ -82,6 +90,8 @@ async def upload_file(filename: str, content: BinaryIO) -> UploadFileResponse:
 
 
 async def download_file(uid: str):
+    _check_port_listening(12001)
+
     url = "http://localhost:12001/api/download"
 
     try:
