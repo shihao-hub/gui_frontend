@@ -166,13 +166,13 @@
 </div>
 
 <script>
-    const API_BASE_URL = 'http://localhost:8888';
+    const API_BASE_URL = 'http://localhost:12000/pages/components/todolists';
     let todos = [];
 
     // 获取所有待办事项
     async function fetchTodos() {
         try {
-            const response = await fetch(`${API_BASE_URL}/api/redis/todolist`);
+            const response = await fetch(`${API_BASE_URL}/api/redis/todolists`);
             if (!response.ok) throw new Error('获取待办事项失败');
             const resp_data = await response.json();
             todos = resp_data.data;
@@ -225,7 +225,7 @@
             const formData = new FormData();
             formData.append('value', value);
 
-            const response = await fetch(`${API_BASE_URL}/api/redis/todolist`, {
+            const response = await fetch(`${API_BASE_URL}/api/redis/todolists`, {
                 method: 'POST',
                 body: formData
             });
@@ -247,7 +247,7 @@
                 // const formData = new FormData();
                 // formData.append('index', index);
 
-                const response = await fetch(`${API_BASE_URL}/api/redis/todolist/delete?index=${index}`, {
+                const response = await fetch(`${API_BASE_URL}/api/redis/todolists/delete?index=${index}`, {
                     method: 'DELETE',
                     // body: formData // 此处后端不是表单，是查询参数
                 });
@@ -266,7 +266,7 @@
     async function editTodo(index) {
         // 先获取指定待办事项
         try {
-            const response = await fetch(`${API_BASE_URL}/api/redis/todolist/${index}`);
+            const response = await fetch(`${API_BASE_URL}/api/redis/todolists/${index}`);
             if (!response.ok) throw new Error('获取待办事项详情失败');
             const resp_data = await response.json();
             const todoItem = resp_data.data;
@@ -276,7 +276,7 @@
                 const formData = new FormData();
                 formData.append('content', newText.trim());
 
-                const updateResponse = await fetch(`${API_BASE_URL}/api/redis/todolist/${index}`, {
+                const updateResponse = await fetch(`${API_BASE_URL}/api/redis/todolists/${index}`, {
                     method: 'POST',
                     body: formData
                 });

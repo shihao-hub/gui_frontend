@@ -16,10 +16,8 @@
 
 from nicegui import ui
 
-from models.mongodb_models import Word
-
-PAGE_TITLE = "单词笔记本"
-PAGE_PATH = "/pages/components/word_notebook"
+from .models import Word
+from . import configs
 
 
 def add_word(container, word):
@@ -27,7 +25,7 @@ def add_word(container, word):
         ui.label(word)
 
 
-@ui.page(PAGE_PATH)
+@ui.page(configs.PAGE_PATH, title=configs.PAGE_TITLE)
 async def word_notebook():
     with ui.row():
         pass

@@ -1,23 +1,7 @@
-__all__ = ["File", "Word"]
-
 import mongoengine as engine
-
 from loguru import logger
 
-DATABASE = "nicegui_start_project"
-DATABASE_ALIAS = f"{DATABASE}_alias"
-
-engine.connect(db=DATABASE, alias=DATABASE_ALIAS, host="localhost", port=27017)
-
-
-class File(engine.DynamicDocument):
-    filename = engine.StringField(required=True)
-    filepath = engine.StringField(required=True)
-    filesize = engine.IntField()
-
-    meta = dict(collection="files", db_alias=DATABASE_ALIAS)
-
-    objects: engine.queryset.queryset.QuerySet
+from nicegui_start_project.settings import DATABASE_ALIAS
 
 
 class Word(engine.DynamicDocument):
@@ -56,10 +40,3 @@ class Word(engine.DynamicDocument):
             # raise engine.ValidationError("Word field must contain only letters")
 
         iife_clean_word()
-
-
-if __name__ == '__main__':
-    def test_Word():  # NOQA
-        Word.drop_collection()
-        word = Word(word="hello", meaning="world")
-        word.save()

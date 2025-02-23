@@ -2,6 +2,8 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/projects/ag" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/projects/electron_start_project/backend" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/projects/nicegui_start_project" vcs="Git" />
   </component>
 </project>

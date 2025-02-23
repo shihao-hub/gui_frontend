@@ -13,8 +13,7 @@ import time
 
 from nicegui import ui
 
-PAGE_TITLE = "定时通知"
-PAGE_PATH = "/pages/components/scheduled_notification"
+from . import configs
 
 
 def get_current_ymd():
@@ -25,7 +24,7 @@ def get_current_hm():
     return time.strftime("%H:%M", time.localtime(time.time()))
 
 
-@ui.page(PAGE_PATH)
+@ui.page(configs.PAGE_PATH, title=configs.PAGE_TITLE)
 async def scheduled_notification():
     with ui.row():
         with ui.column():

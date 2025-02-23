@@ -1,12 +1,18 @@
 from pathlib import Path
 from typing import Dict
 
+import redis
 from lxml import etree
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 SOURCE_DIR = Path(__file__).resolve().parent.parent
 
+DATABASE = "nicegui_start_project"
+DATABASE_ALIAS = f"{DATABASE}_alias"
+
 CONFIGS_PATH = f"{BASE_DIR}/conf/configs.xml"
+
+redis_db = redis.StrictRedis(host="localhost", port=6379, db=0)
 
 
 def iife_parser_configs_xml_file() -> Dict:
