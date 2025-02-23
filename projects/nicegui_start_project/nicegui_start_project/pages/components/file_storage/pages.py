@@ -66,6 +66,10 @@ def _is_text_file(filename: str, content: BinaryIO) -> bool:
 
 
 def _create_render_dialog(file: File, download_on_click) -> ui.dialog:
+    # attention: nfs_service 部署在本地计算机上，可以直接通过路径访问。
+    #            但如果是其他服务器，那可能需要封装一下 open，通过 url 无感读取文件（涉及网络 io）
+    #            pip3 install fdfs-client-py3==1.0.0（分布式文件系统 fastdfs）
+    #            - [fastdfs 基础知识](https://www.cnblogs.com/xiximayou/p/15722444.html)
     filepath = f"{settings.BASE_DIR}/services/nfs_service/files/{file.filepath}"
     filename = file.filename
     ext = os.path.splitext(filename)[1].lower()
