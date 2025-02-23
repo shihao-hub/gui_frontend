@@ -7,6 +7,7 @@ class File(engine.DynamicDocument):
     filename = engine.StringField(required=True)
     filepath = engine.StringField(required=True)
     filesize = engine.IntField()
+    mtime = engine.IntField(default=0)
 
     meta = dict(collection="file_storage__files", db_alias=DATABASE_ALIAS)
 

@@ -8,6 +8,7 @@
         <setting>
             <name>PORT</name>
             <value>12000</value>
+            <type>int</type>
         </setting>
     </settings>
 </configuration>

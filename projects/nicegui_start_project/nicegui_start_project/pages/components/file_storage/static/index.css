@@ -1,0 +1,90 @@
+/* 主容器样式 */
+.upload-container {
+    background-color: #f8f9fa;
+    border: 2px dashed #ced4da;
+    border-radius: 12px;
+    padding: 2rem;
+    transition: all 0.3s ease;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 2rem;
+}
+
+.upload-container:hover {
+    border-color: #0d6efd;
+    background-color: #e7f1ff;
+}
+
+/* 文件卡片样式 */
+.file-card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 1rem;
+    margin: 0.5rem 0;
+    transition: transform 0.2s;
+}
+
+.file-card:hover {
+    transform: translateY(-2px);
+}
+
+/* 进度条样式 */
+.progress-bar {
+    height: 8px;
+    border-radius: 4px;
+    background-color: #e9ecef;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background-color: #0d6efd;
+    transition: width 0.3s ease;
+}
+
+/* 响应式布局 */
+@media (max-width: 640px) {
+    .file-grid {
+        grid-template-columns: repeat(1, 1fr) !important;
+    }
+}
+
+/* 添加最小宽度限制。但是为什么会报错？ */
+/*.min-w-[320px] {
+    min-width: 320px;
+}*/
+
+/* 响应式网格布局 */
+.grid {
+    display: grid;
+}
+
+.grid-cols-1 {
+    grid-template-columns: repeat(1, 1fr);
+}
+
+.md\:grid-cols-2 {
+    @media (min-width: 768px) {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.lg\:grid-cols-3 {
+    @media (min-width: 1024px) {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* 添加悬停效果 */
+.file-card {
+    transition: transform 0.2s ease-in-out;
+}
+
+.file-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}

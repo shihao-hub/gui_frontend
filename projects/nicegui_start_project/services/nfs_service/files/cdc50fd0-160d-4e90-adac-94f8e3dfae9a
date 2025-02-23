@@ -1,0 +1,83 @@
+## 终结操作有哪些
+
+在函数式编程中，**终结操作**（Terminal Operations）是指对一个流（或序列）执行的操作，这些操作会消费流中的数据并产生结果，通常会触发数据的处理并不是返回流本身，而是返回最终的结果。以下是一些常见的终结操作：
+
+### 1. **toArray / toTable**
+   - 将流中的元素转换为一个数组或表。
+   - 示例：`local result = stream:totable()`
+
+### 2. **count**
+   - 返回流中元素的数量。
+   - 示例：`local count = stream:count()`
+
+### 3. **reduce**
+   - 将流中的元素通过某个函数进行归约，返回单一的结果。
+   - 示例：`local sum = stream:reduce(0, function(acc, x) return acc + x end)`
+
+### 4. **collect**
+   - 根据提供的收集器将流中的元素聚合到一个集合中。
+   - 示例：`local set = stream:collect(function() return {} end, function(acc, x) acc[x] = true end)`
+
+### 5. **anyMatch**
+   - 判断流中是否有任意一个元素符合指定的条件。
+   - 示例：`local hasEven = stream:anyMatch(function(x) return x % 2 == 0 end)`
+
+### 6. **allMatch**
+   - 判断流中的所有元素是否都符合指定的条件。
+   - 示例：`local allEven = stream:allMatch(function(x) return x % 2 == 0 end)`
+
+### 7. **noneMatch**
+   - 判断流中是否没有元素符合指定的条件。
+   - 示例：`local noEven = stream:noneMatch(function(x) return x % 2 == 0 end)`
+
+### 8. **findFirst**
+   - 查找流中的第一个元素（如果存在）。
+   - 示例：`local first = stream:findFirst()`
+
+### 9. **findAny**
+   - 在流中查找任意一个元素的存在（通常用于并行流）。
+   - 示例：`local any = stream:findAny()`
+
+### 示例
+下面是如何在您的 `Stream` 实现中添加一些终结操作的示例：
+
+```lua
+function Stream:count()
+    local count = 0
+    self._iter:foreach(function() count = count + 1 end)
+    return count
+end
+
+function Stream:reduce(initial, fn)
+    local accumulator = initial
+    self._iter:foreach(function(value)
+        accumulator = fn(accumulator, value)
+    end)
+    return accumulator
+end
+
+function Stream:anyMatch(predicate)
+    local found = false
+    self._iter:foreach(function(value)
+        if predicate(value) then
+            found = true
+        end
+    end)
+    return found
+end
+
+function Stream:findFirst()
+    local firstValue = nil
+    local found = false
+    self._iter:foreach(function(value)
+        if not found then
+            firstValue = value
+            found = true
+        end
+    end)
+    return firstValue
+end
+```
+
+### 总结
+终结操作是对流中数据进行最终处理的关键，它们通常会导致流中数据的消费，并返回具体的结果。根据具体的需求和应用场景，您可以扩展您的 `Stream` 类，添加更多的终结操作来增强其功能。
