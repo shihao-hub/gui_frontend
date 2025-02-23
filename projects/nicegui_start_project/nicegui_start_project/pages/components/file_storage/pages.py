@@ -3,7 +3,7 @@
 - 基础的文件上传和下载功能
 
 """
-
+import asyncio
 import io
 import os
 import pprint
@@ -163,6 +163,21 @@ def _fill_file_card_fns(context: Dict) -> Dict:
     return locals()
 
 
+# 在文件卡片创建函数外部定义状态管理类
+class DownloadState:
+    def __init__(self):
+        self.states = {}  # 使用字典存储每个文件的下载状态
+
+    def get_state(self, file_id: str) -> bool:
+        return self.states.get(file_id, False)
+
+    def set_state(self, file_id: str, value: bool):
+        self.states[file_id] = value
+
+
+download_state = DownloadState()
+
+
 def _fill_file_card(file_card, file: File, content: BinaryIO = None):
     with file_card:  # [!code ++]
         with ui.row().classes('items-center gap-4'):
@@ -222,15 +237,38 @@ def _fill_file_card(file_card, file: File, content: BinaryIO = None):
                         await confirm_dialog  # 等待用户操作
 
                     # 创建状态管理变量
-                    is_downloading = ui.state(False)
+                    # is_downloading = ui.state(False)
 
                     async def download_on_click():
+                        if download_state.get_state(file.id):
+                            return
+
                         try:
-                            is_downloading.value = True
+                            download_state.set_state(file.id, True)
+                            download_button.disable()
                             ui.download(f"{configs.PAGE_PATH}/api/download?uid={file.filepath}")
+
+                            def get_wait_time():
+                                # todo: 根据文件大小估计等待时间（考虑最好情况）
+                                # 获取文件大小（单位：字节）
+                                file_size = file.filesize  # 假设已从数据库获取
+
+                                # 动态计算等待时间（基于平均网速估算）
+                                estimated_speed = 1 * 1024 * 1024  # 假设平均5MB/s（可根据实际情况调整）
+                                min_wait = 1  # 最短等待1秒
+                                max_wait = 30  # 最长等待30秒
+
+                                # 计算理论下载时间（秒）
+                                res = max(min(file_size / estimated_speed, max_wait), min_wait)
+                                print(f"理论下载时间：{res:.2f}秒")
+                                return res
+
+                            wait_time = get_wait_time()
+                            await asyncio.sleep(wait_time)  # fixme: 这样显然是不对的，应该运行 js 代码，让浏览器通知
                         finally:
                             # 无论成功与否都恢复按钮
-                            is_downloading.value = False
+                            download_state.set_state(file.id, False)
+                            download_button.enable()
 
                     async def render_on_click():
                         try:
@@ -244,7 +282,6 @@ def _fill_file_card(file_card, file: File, content: BinaryIO = None):
 
                     download_button = ui.button(icon='download', color='green', on_click=download_on_click)
                     download_button.tooltip('下载文件').props('flat dense')
-                    download_button.bind_visibility_from(is_downloading, 'value', lambda val: not val)
 
                     delete_button = ui.button(icon='delete', color='red', on_click=delete_on_click)
                     delete_button.tooltip('删除文件').props('flat dense')
