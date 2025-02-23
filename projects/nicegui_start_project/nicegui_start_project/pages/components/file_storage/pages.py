@@ -221,8 +221,16 @@ def _fill_file_card(file_card, file: File, content: BinaryIO = None):
 
                         await confirm_dialog  # 等待用户操作
 
+                    # 创建状态管理变量
+                    is_downloading = ui.state(False)
+
                     async def download_on_click():
-                        ui.download(f"{configs.PAGE_PATH}/api/download?uid={file.filepath}")
+                        try:
+                            is_downloading.value = True
+                            ui.download(f"{configs.PAGE_PATH}/api/download?uid={file.filepath}")
+                        finally:
+                            # 无论成功与否都恢复按钮
+                            is_downloading.value = False
 
                     async def render_on_click():
                         try:
@@ -236,6 +244,7 @@ def _fill_file_card(file_card, file: File, content: BinaryIO = None):
 
                     download_button = ui.button(icon='download', color='green', on_click=download_on_click)
                     download_button.tooltip('下载文件').props('flat dense')
+                    download_button.bind_visibility_from(is_downloading, 'value', lambda val: not val)
 
                     delete_button = ui.button(icon='delete', color='red', on_click=delete_on_click)
                     delete_button.tooltip('删除文件').props('flat dense')
