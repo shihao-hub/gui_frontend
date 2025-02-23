@@ -22,7 +22,7 @@ from nicegui.events import UploadEventArguments
 from fastapi.responses import StreamingResponse
 
 from nicegui_start_project.utils import get_random_port, sync_to_async
-from nicegui_start_project.web_apis import upload_file as upload_file, download_file
+from nicegui_start_project.web_apis import upload_file
 from .models import File
 from . import configs
 
@@ -78,7 +78,7 @@ def add_element(container: Element, file: File, content: BinaryIO = None) -> Non
                 row.delete()
 
             async def download_on_click():
-                ui.download(f"{configs.PAGE_PATH}/download?uid={file.filepath}")
+                ui.download(f"{configs.PAGE_PATH}/api/download?uid={file.filepath}")
 
             async def render_on_click():
                 # todo: <div id="render_canvas"></div> 渲染图片
@@ -87,11 +87,6 @@ def add_element(container: Element, file: File, content: BinaryIO = None) -> Non
             ui.button("delete", on_click=delete_on_click)
             ui.button("download", on_click=download_on_click)
             ui.button("render", on_click=render_on_click)
-
-
-@app.get(f"{configs.PAGE_PATH}/download")
-async def download(uid: str):
-    return await download_file(uid)
 
 
 @ui.page(configs.PAGE_PATH, title=configs.PAGE_TITLE)
