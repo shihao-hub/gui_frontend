@@ -137,7 +137,7 @@ def main():
             except Exception as e:
                 logger.error(f"Error importing module {dirname}: {e}")
     print(pprint.pformat([f"{e.path} - {e.methods}" for e in app.routes if isinstance(e, APIRoute)]))
-    ui.run(host=HOST, port=PORT, reload=False, show=False)  # favicon="🚀"
+    ui.run(host=HOST, port=PORT, reload=False, show=False, favicon="🚀")
 
 
 if __name__ == '__main__':
