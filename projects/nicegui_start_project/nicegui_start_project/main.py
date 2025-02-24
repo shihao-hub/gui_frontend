@@ -125,15 +125,21 @@ def main():
                 page_title = getattr(module, "PAGE_TITLE", None)
                 page_path = getattr(module, "PAGE_PATH", None)
                 page_icon = getattr(module, "PAGE_ICON", None)
+                version = getattr(module, "VERSION", "").strip()
                 if page_title and page_path:
+                    card_classes = "service-card"
+                    if not version.startswith("1"):  # 卡片背景置灰
+                        card_classes += " bg-gray-200"
                     link = ui.link(page_title, url_join([BASE_URL, page_path]))
-                    link.classes("service-card")
+                    link.classes(card_classes)
                     link.props(""" target="_blank" """)
                     with link, ui.row().classes('card-content'):
-                        if page_icon is None:
-                            page_icon = "📄"
-                        ui.label(page_icon).classes('card-icon')
+                        ui.label(page_icon or "📄").classes('card-icon')
                         ui.label(page_title).classes('card-title')
+
+                    if version:  # 可选：添加版本角标（浮动角标）
+                        with link:
+                            ui.badge(version).classes('absolute top-2 right-2 text-xs')
                 else:
                     logger.warning(f"Module '{dirname}' does not have 'PAGE_TITLE' or 'PAGE_PATH' defined.")
             except Exception as e:

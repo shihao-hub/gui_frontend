@@ -13,7 +13,7 @@ import uuid
 import platform
 from datetime import datetime
 from types import SimpleNamespace
-from typing import BinaryIO, Dict
+from typing import BinaryIO, Dict, Optional
 
 from fastapi import UploadFile
 from loguru import logger
@@ -25,7 +25,7 @@ from nicegui.events import UploadEventArguments
 from fastapi.responses import StreamingResponse
 
 from nicegui_start_project import settings
-from nicegui_start_project.utils import get_random_port, sync_to_async, read_css, thread_pool
+from nicegui_start_project.utils import get_random_port, sync_to_async, read_css, read_js, thread_pool
 from nicegui_start_project.web_apis import upload_file
 from .models import File
 from . import configs
@@ -126,6 +126,7 @@ def _create_render_dialog(file: File, download_on_click) -> ui.dialog:
                 elif ext in ['.mp4', '.webm', '.ogg']:  # 视频预览
                     ui.video(filepath).classes('w-full h-auto max-h-full')
                 elif ext in ['.csv', '.txt', '.md']:  # 文本文件预览
+                    # fixme: markdown 渲染的时候，image 路径似乎会被转换，然后用 http 获取，这是不对的，需要处理。
                     with open(filepath, 'r', encoding="utf-8") as f:
                         content = f.read(5000)  # 限制预览长度
                     ui.code(content).classes('''
@@ -297,6 +298,24 @@ def add_element(file_container: Element, file: File, content: BinaryIO = None) -
             _fill_file_card(file_card, file, content)
 
 
+def _add_paste_upload_area(context: Optional[Dict] = None):
+    with ui.column().classes('paste-container flex-1') as paste_area:
+        ui.icon('content_paste', size='xl', color='green')
+        ui.label("Ctrl+V 粘贴文件或点击上传").classes('text-lg text-gray-600 mt-2')
+
+        # 隐藏的输入组件
+        paste_upload = ui.upload(label='').classes('hidden')
+
+        # 点击事件处理
+        def handle_click():
+            paste_upload.run_method('pickFiles')
+
+        paste_area.on('click', handle_click)
+
+        # 粘贴事件处理
+        ui.add_body_html(f""" <script>{read_js(f"{configs.STATIC_URL}/paste.js")}</script> """)
+
+
 @ui.page(configs.PAGE_PATH, title=configs.PAGE_TITLE)
 async def file_storage():
     async def on_upload(event: UploadEventArguments):
@@ -322,17 +341,22 @@ async def file_storage():
 
     with ui.column().classes('w-full max-w-4xl mx-auto p-8'):
         ui.label("文件存储中心").classes('text-3xl font-bold mb-8')
-        # 上传区域
-        with ui.column().classes('upload-container'):
-            ui.icon('cloud_upload', size='xl', color='primary')
+        # 使用行布局并排显示两个上传区域
+        with ui.row().classes('w-full gap-8'):
+            # 上传区域
+            with ui.column().classes('upload-container'):
+                ui.icon('cloud_upload', size='xl', color='primary')
 
-            # todo: 实现 拖放文件到此区域或点击上传 功能
-            # ui.label("拖放文件到此区域或点击上传").classes('text-lg text-gray-600 mt-2')
-            upload = ui.upload(label="选择文件",
-                               on_upload=on_upload,
-                               max_file_size=10 * 1024 * 1024)  # 10MB限制
-            # upload.props('accept=".pdf,.docx,.jpg,.png,.md"')
-            upload.classes("max-w-full")
+                # todo: 实现 拖放文件到此区域或点击上传 功能
+                # ui.label("拖放文件到此区域或点击上传").classes('text-lg text-gray-600 mt-2')
+                upload = ui.upload(label="选择文件",
+                                   on_upload=on_upload,
+                                   max_file_size=10 * 1024 * 1024)  # 10MB限制
+                # upload.props('accept=".pdf,.docx,.jpg,.png,.md"')
+                upload.classes("max-w-full")
+
+            # 新增粘贴上传区域（右侧）
+            # _add_paste_upload_area()
 
         # 分割线
         ui.separator().classes('mb-8')

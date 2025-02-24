@@ -9,6 +9,7 @@ __all__ = [
 
     "read_html",
     "read_css",
+    "read_js",
     "read_html_head",
     "read_html_body"
 ]
@@ -199,9 +200,16 @@ def read_html(filename: str) -> str:
     with open(filename, "r", encoding="utf-8") as f:
         return f.read()
 
+
 def read_css(filename: str) -> str:
     with open(filename, "r", encoding="utf-8") as f:
         return f.read()
+
+
+def read_js(filename: str) -> str:
+    with open(filename, "r", encoding="utf-8") as f:
+        return f.read()
+
 
 def _read_html_tag(filename: str, tag_name: Literal["head", "body"]) -> str:
     content = read_html(filename)

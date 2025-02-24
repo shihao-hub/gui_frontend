@@ -18,6 +18,25 @@
     background-color: #e7f1ff;
 }
 
+.upload-container, .paste-container {
+    border: 2px dashed #cbd5e1;
+    border-radius: 1rem;
+    padding: 2rem;
+    transition: all 0.3s;
+    background: #f8fafc;
+    cursor: pointer;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.upload-container:hover, .paste-container:hover {
+    border-color: #3b82f6;
+    background: #eff6ff;
+}
+
 /* 文件卡片样式 */
 .file-card {
     background: white;

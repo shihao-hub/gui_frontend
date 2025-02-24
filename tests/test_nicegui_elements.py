@@ -82,11 +82,11 @@ from datetime import datetime
 from random import random
 from tempfile import SpooledTemporaryFile
 from typing import List, Dict, Optional, Callable
-from functools import lru_cache
+from functools import lru_cache, partial
 
 from nicegui import ui, app
 from nicegui.element import Element
-from nicegui.events import UploadEventArguments, MouseEventArguments
+from nicegui.events import UploadEventArguments, MouseEventArguments, KeyEventArguments
 
 from libs.utils import Module
 
@@ -1027,27 +1027,59 @@ class CommonElement(NiceGuiElement):
 
         iife_layout()
 
-        def iife_facade():
-            @ui.page('/facade')
+        def iife_others():
+            @ui.page('/others')
             def page():
-                # 67.
+                ui.button('Default', on_click=lambda: ui.colors())
+                ui.button('Gray', on_click=lambda: ui.colors(primary='#555'))
                 add_hr()
 
-                # 68.
+                label = ui.label()
+                ui.timer(1.0, lambda: label.set_text(f'{datetime.now():%X}'))
                 add_hr()
 
-                # 69.
+                def handle_key(e: KeyEventArguments):
+                    if e.key == 'f' and not e.action.repeat:
+                        if e.action.keyup:
+                            ui.notify('f was just released')
+                        elif e.action.keydown:
+                            ui.notify('f was just pressed')
+                    if e.modifiers.shift and e.action.keydown:
+                        if e.key.arrow_left:
+                            ui.notify('going left')
+                        elif e.key.arrow_right:
+                            ui.notify('going right')
+                        elif e.key.arrow_up:
+                            ui.notify('going up')
+                        elif e.key.arrow_down:
+                            ui.notify('going down')
+
+                keyboard = ui.keyboard(on_key=handle_key)
+                ui.label('Key events can be caught globally by using the keyboard element.')
+                ui.checkbox('Track key events').bind_value_to(keyboard, 'active')
                 add_hr()
 
-                # 70.
+                class Demo:
+                    def __init__(self):
+                        self.number = 1
+
+                demo = Demo()
+                v = ui.checkbox('visible', value=True)
+                with ui.column().bind_visibility_from(v, 'value'):
+                    ui.slider(min=1, max=3).bind_value(demo, 'number')
+                    ui.toggle({1: 'A', 2: 'B', 3: 'C'}).bind_value(demo, 'number')
+                    ui.number().bind_value(demo, 'number')
+
                 add_hr()
 
-                # 71.
-                add_hr()
+                async def my_async_function(param1, param2):
+                    print(f"param1: {param1}, param2: {param2}")
 
-                # 72.
+                # 使用 partial 来创建一个新函数，其中 param1 被固定为 'Hello'
+                button = ui.button("Click me")
+                button.on_click(partial(my_async_function, 'Hello'))
                 add_hr()
 
                 invoke_iife_functions(locals())
 
-        iife_facade()
+        iife_others()
