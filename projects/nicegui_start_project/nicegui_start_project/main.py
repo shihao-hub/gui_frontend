@@ -134,6 +134,8 @@ def main():
                             page_icon = "📄"
                         ui.label(page_icon).classes('card-icon')
                         ui.label(page_title).classes('card-title')
+                else:
+                    logger.warning(f"Module '{dirname}' does not have 'PAGE_TITLE' or 'PAGE_PATH' defined.")
             except Exception as e:
                 logger.error(f"Error importing module {dirname}: {e}")
     print(pprint.pformat([f"{e.path} - {e.methods}" for e in app.routes if isinstance(e, APIRoute)]))
