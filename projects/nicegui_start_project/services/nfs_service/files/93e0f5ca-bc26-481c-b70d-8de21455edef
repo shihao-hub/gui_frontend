@@ -1,0 +1,55 @@
+from datetime import datetime
+
+from nicegui import ui
+
+TITLE = "工作日计算"
+ICON = "event"
+
+
+class Widget:
+    def __init__(self, parent):
+        self.parent = parent
+
+    def init_widget(self):
+        def calculate_workdays():
+            # 这里实现工作日计算逻辑
+            result_label.text = f"{year_select.value}年工作日数：..."
+
+        with self.parent.classes('flex flex-col items-center justify-center h-full p-4'):  # 父容器居中
+            # 工具1: 工作日计算
+            with ui.card().classes('''
+                w-full max-w-md 
+                shadow-lg rounded-lg
+                bg-blue-50
+                transition-all hover:shadow-xl
+            '''):
+                # 卡片头部
+                with ui.card_section().classes('bg-blue-100/50 border-b'):
+                    ui.label('📅 年度工作日统计').classes('text-xl font-bold text-blue-800')
+
+                # 卡片内容
+                with ui.card_section().classes('space-y-4 p-4'):
+                    # 年份选择行
+                    with ui.row().classes('items-center justify-between w-full'):
+                        ui.label('选择年份：').classes('text-gray-600')
+                        year_select = ui.select(
+                            [str(datetime.now().year - 1), str(datetime.now().year)],
+                            value=str(datetime.now().year)
+                        ).classes('w-32 rounded-md border-gray-300')
+
+                    # 结果展示（带动态样式）
+                    result_label = ui.label().classes('''
+                        text-2xl font-mono text-center py-2
+                        bg-white rounded-lg border
+                        transition-all duration-300
+                    ''')
+
+                    # 操作按钮
+                    ui.button('开始计算',
+                              on_click=calculate_workdays,
+                              color='primary'
+                              ).classes('w-full h-10 rounded-lg hover:bg-blue-700')
+
+
+def init_widget(parent):
+    Widget(parent).init_widget()

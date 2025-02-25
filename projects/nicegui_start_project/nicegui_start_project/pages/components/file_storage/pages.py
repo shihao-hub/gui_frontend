@@ -101,6 +101,7 @@ def _create_render_dialog(file: File, download_on_click) -> ui.dialog:
                         # print(filepath)
                         # image = Image.open(filepath)
                         # thread_pool.submit(lambda: image.show())
+                        # todo: 在图片预览部分添加尺寸适配
                         ui.image(filepath).classes('max-h-full object-contain')
 
                         # deepseek
@@ -321,7 +322,7 @@ async def file_storage():
     async def on_upload(event: UploadEventArguments):
         filepath = await to_upload_file(event.name, event.content)
 
-        def iife_get_filesize():
+        def iife_get_filesize():  # fixme: iife 显然是 runnable，即不应该有返回值？或者说 iife 就是一次性代码的意思？
             binary_file = event.content
             binary_file.seek(0, 2)  # 移动到文件末尾
             filesize = binary_file.tell()  # 获取字节数
@@ -363,6 +364,7 @@ async def file_storage():
 
         # 文件列表区域
         with ui.column().classes('w-full gap-4'):
+            # todo: 支持排序、搜索和分页。分页是关键，删除和新增的时候也需要变化。-> @refreshable?
             ui.label("已上传文件").classes('text-xl font-semibold mb-4')
             # file_container = ui.row().classes('w-full gap-4 overflow-x-auto')
             file_container = ui.column().classes('w-full gap-4')  # 原垂直布局

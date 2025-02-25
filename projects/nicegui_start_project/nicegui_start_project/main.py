@@ -22,6 +22,10 @@ def init_database():
     engine.connect(db=DATABASE, alias=DATABASE_ALIAS, host="localhost", port=27017)
 
 
+def init_logger():
+    pass
+
+
 def start_services() -> Callable:
     python_exe = sys.executable  # deepseek 666
 
@@ -101,6 +105,7 @@ def main():
     start_services()
 
     init_database()
+    init_logger()
 
     def url_join(snippets: List[str]) -> str:
         return "/".join([v.strip("/") for v in snippets])

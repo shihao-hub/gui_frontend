@@ -11,7 +11,9 @@ __all__ = [
     "read_css",
     "read_js",
     "read_html_head",
-    "read_html_body"
+    "read_html_body",
+
+    "get_package_path"
 ]
 
 import asyncio
@@ -21,6 +23,7 @@ import re
 import socket
 import time
 from concurrent import futures
+from pathlib import Path
 from typing import Optional, LiteralString, Literal
 
 from loguru import logger
@@ -227,6 +230,14 @@ def read_html_body(filename: str) -> str:
     return _read_html_tag(filename, "body")
 
 
+def get_package_path(file: str):
+    relative_path = str(Path(file).resolve().relative_to(Path.cwd()))
+    extension = Path(file).suffix
+    relative_path = relative_path.replace("\\", ".")
+    relative_path = relative_path.replace("/", ".")
+    return relative_path[: -len(extension)]
+
+
 if __name__ == '__main__':
     # ThreadPool
     def test_ThreadPool():  # NOQA
@@ -263,4 +274,12 @@ if __name__ == '__main__':
         # print(SimpleCache())
 
 
-    test_Cache()
+    # test_Cache()
+
+    def test_get_package_path():
+        res = get_package_path(__file__)
+        print(type(res), res)
+        print(type(__file__), __file__)
+
+
+    test_get_package_path()

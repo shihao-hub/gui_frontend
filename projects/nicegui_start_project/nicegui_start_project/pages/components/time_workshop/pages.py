@@ -1,8 +1,18 @@
+import collections
+import importlib
+import os
 from datetime import datetime
+from pathlib import Path
+from typing import List
+
+from loguru import logger
 
 from nicegui import ui
 
-from . import configs, widgets
+from nicegui_start_project.settings import SOURCE_DIR
+from . import configs
+
+CURRENT_PATH = str(Path(__file__).resolve().parent)
 
 
 @ui.page(configs.PAGE_PATH, title=configs.PAGE_TITLE)
@@ -26,14 +36,37 @@ async def time_workshop():
        - 当对应标签被点击时自动显示
     """
 
+    # note: 约定大于配置！
+
+    def get_modules():
+        res = []
+        for name in os.listdir(f"{CURRENT_PATH}/tab_widgets"):
+            # 忽略 _ 和 . 前缀、忽略文件夹
+            if (name.startswith("_")
+                    or name.startswith(".")
+                    or os.path.isdir(f"{CURRENT_PATH}/tab_widgets/{name}")):
+                continue
+
+            try:
+                name_with_no_ext = os.path.splitext(name)[0]
+                module = importlib.import_module(f"{configs.PACKAGE_PATH}.tab_widgets.{name_with_no_ext}")
+                res.append(module)
+            except ImportError as e:
+                logger.error(f"{e}")
+        return res
+
+    UiTabsElement = collections.namedtuple("ui_tabs_element", ["module", "tab"])
+    ui_tabs: List[UiTabsElement] = []
+
     # 主页面布局
     with ui.tabs().classes('w-full') as tabs:
-        test_event_tab = ui.tab(widgets.test_event.TITLE, icon=widgets.test_event.ICON)
-        test_schedule_tab = ui.tab(widgets.test_schedule.TITLE, icon=widgets.test_schedule.ICON)
+        for module in get_modules():
+            tab = ui.tab(module.TITLE, icon=module.ICON)
+            ui_tabs_element = UiTabsElement(module, tab)
+            ui_tabs.append(ui_tabs_element)
 
-    with ui.tab_panels(tabs, value=test_event_tab).classes('w-full'):
-        with ui.tab_panel(test_event_tab) as tab_panel:
-            widgets.test_event.init_widget(tab_panel)
-
-        with ui.tab_panel(test_schedule_tab) as tab_panel:
-            widgets.test_schedule.init_widget(tab_panel)
+    # 选项卡面板
+    with ui.tab_panels(tabs).classes('w-full'):
+        for elem in ui_tabs:
+            with ui.tab_panel(elem.tab) as tab_panel:
+                elem.module.init_widget(tab_panel)
