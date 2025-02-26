@@ -17,6 +17,10 @@ from nicegui_start_project.settings import (
     DATABASE, DATABASE_ALIAS
 )
 
+NFS_SERVICE_STARTUP_ENTRY_PATH = f"{BASE_DIR}/services/nfs_service/nfs/main.py"
+COMPONENTS_ROOT_DIR = f"{SOURCE_DIR}/pages/components"
+COMPONENTS_PACKAGE_NAME = "pages.components"
+
 
 def init_database():
     engine.connect(db=DATABASE, alias=DATABASE_ALIAS, host="localhost", port=27017)
@@ -31,7 +35,7 @@ def start_services() -> Callable:
 
     # 启动另一个程序（非阻塞）
     nfs_service = subprocess.Popen(
-        [sys.executable, f"{BASE_DIR}/services/nfs_service/nfs/main.py"],  # 参数列表
+        [sys.executable, NFS_SERVICE_STARTUP_ENTRY_PATH],  # 参数列表
         shell=True,  # Windows 需要此参数识别 .exe
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE
@@ -44,61 +48,63 @@ def start_services() -> Callable:
     return wait
 
 
-CSS = """
-/* 主容器 */
-.card-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 1.5rem;
-    padding: 2rem;
-    max-width: 1200px;
-    margin: 0 auto;
-}
-
-/* 卡片样式 */
-.service-card {
-    background: white;
-    border-radius: 12px;
-    padding: 1.5rem;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
-    border: 2px solid transparent;
-    cursor: pointer;
-    text-decoration: none !important;
-}
-
-.service-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
-    border-color: #3B82F6;
-}
-
-/* 卡片内容 */
-.card-content {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.card-icon {
-    font-size: 1.5rem;
-}
-
-.card-title {
-    font-size: 1.1rem;
-    font-weight: 500;
-    color: #1F2937;
-    margin: 0;
-}
-
-/* 响应式优化 */
-@media (max-width: 640px) {
+def _add_css():
+    css = """
+    /* 主容器 */
     .card-container {
-        grid-template-columns: 1fr;
-        padding: 1rem;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.5rem;
+        padding: 2rem;
+        max-width: 1200px;
+        margin: 0 auto;
     }
-}
-"""
+
+    /* 卡片样式 */
+    .service-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+        cursor: pointer;
+        text-decoration: none !important;
+    }
+
+    .service-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+        border-color: #3B82F6;
+    }
+
+    /* 卡片内容 */
+    .card-content {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .card-icon {
+        font-size: 1.5rem;
+    }
+
+    .card-title {
+        font-size: 1.1rem;
+        font-weight: 500;
+        color: #1F2937;
+        margin: 0;
+    }
+
+    /* 响应式优化 */
+    @media (max-width: 640px) {
+        .card-container {
+            grid-template-columns: 1fr;
+            padding: 1rem;
+        }
+    }
+    """
+    ui.add_head_html(f""" <style>{css}</style> """)
 
 
 def main():
@@ -110,23 +116,22 @@ def main():
     def url_join(snippets: List[str]) -> str:
         return "/".join([v.strip("/") for v in snippets])
 
-    ui.add_head_html(f""" <style>{CSS}</style> """)
+    _add_css()
 
     with ui.column().classes('card-container'):
-        root_dir = f"{SOURCE_DIR}/pages/components"
-        for dirname in os.listdir(f"{SOURCE_DIR}/pages/components"):
-            if not os.path.isdir(f"{root_dir}/{dirname}") or dirname.startswith("_"):
+        for dirname in os.listdir(COMPONENTS_ROOT_DIR):
+            if not os.path.isdir(f"{COMPONENTS_ROOT_DIR}/{dirname}") or dirname.startswith("_"):
                 continue
             # 体现了约定大于配置？
             try:
                 # import code
-                importlib.import_module(f"pages.components.{dirname}.pages")
+                importlib.import_module(f"{COMPONENTS_PACKAGE_NAME}.{dirname}.pages")
                 try:
-                    importlib.import_module(f"pages.components.{dirname}.routers")
+                    importlib.import_module(f"{COMPONENTS_PACKAGE_NAME}.{dirname}.routers")
                 except ImportError:
                     pass
 
-                module = importlib.import_module(f"pages.components.{dirname}.configs")
+                module = importlib.import_module(f"{COMPONENTS_PACKAGE_NAME}.{dirname}.configs")
                 page_title = getattr(module, "PAGE_TITLE", None)
                 page_path = getattr(module, "PAGE_PATH", None)
                 page_icon = getattr(module, "PAGE_ICON", None)
