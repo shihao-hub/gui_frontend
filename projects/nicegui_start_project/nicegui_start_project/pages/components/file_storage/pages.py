@@ -30,6 +30,8 @@ from nicegui_start_project.web_apis import upload_file
 from .models import File
 from . import configs
 
+NFS_SERVICE_FILES_DIR = f"{settings.BASE_DIR}/services/nfs_service/files"
+
 
 async def to_upload_file(filename: str, content: BinaryIO) -> str:
     # content: tempfile.SpooledTemporaryFile
@@ -65,12 +67,84 @@ def _is_text_file(filename: str, content: BinaryIO) -> bool:
     return True
 
 
+class PreviewUtils:
+    """ staticmethod 类 """
+
+    @staticmethod
+    def preview_text_file(file: File) -> Element:
+        pass
+
+
 def _create_render_dialog(file: File, download_on_click) -> ui.dialog:
     # attention: nfs_service 部署在本地计算机上，可以直接通过路径访问。
     #            但如果是其他服务器，那可能需要封装一下 open，通过 url 无感读取文件（涉及网络 io）
     #            pip3 install fdfs-client-py3==1.0.0（分布式文件系统 fastdfs）
     #            - [fastdfs 基础知识](https://www.cnblogs.com/xiximayou/p/15722444.html)
-    filepath = f"{settings.BASE_DIR}/services/nfs_service/files/{file.filepath}"
+
+    def picture_preview():
+        with ui.row().classes('w-full h-full justify-center items-center'):
+            # 未能生效。但是莫名其妙又好了。deepseek 简直是前端的噩梦！
+            # print(filepath)
+            # image = Image.open(filepath)
+            # thread_pool.submit(lambda: image.show())
+            # todo: 在图片预览部分添加尺寸适配
+            ui.image(filepath).classes('max-h-full object-contain')
+
+            # deepseek
+            # # 在图片预览部分添加尺寸适配
+            # img = Image.open(filepath)
+            # img.thumbnail((1200, 800))  # 限制最大尺寸
+            # img_bytes = io.BytesIO()
+            # img.save(img_bytes, format='PNG')
+            # ui.image(img_bytes.getvalue()).classes('max-w-full max-h-full object-contain')
+
+    def pdf_preview():
+        # 需要安装 pyppdf
+        ui.html(f'''
+            <iframe 
+                src="{filepath}"
+                style="
+                    width: 100% !important;
+                    height: 100vh !important;  /* 动态高度 */
+                    max-height: calc(90vh - 100px); /* 预留标题和按钮空间 */
+                    border: none;
+                "
+            ></iframe>
+        ''').classes('w-full h-full')
+
+    def video_preview():
+        ui.video(filepath).classes('w-full h-auto max-h-full')
+
+    def unsupported_preview():
+        # 元数据展示优化
+        with ui.column().classes('w-full min-w-0'):
+            ui.label("⚠️ 文件类型不支持直接预览").classes('text-red-500 font-medium')
+            ui.separator()
+            with ui.row().classes('items-center gap-2'):
+                ui.icon('insert_drive_file', size='lg', color='blue')
+                ui.label(filename).classes('font-mono')
+            with ui.grid().classes('grid-cols-2 gap-2'):
+                ui.label("文件大小:").classes('text-gray-600')
+                ui.label(f"{file.filesize / 1024:.1f} KB").classes('font-mono')
+                ui.label("修改时间:").classes('text-gray-600')
+                mtime = datetime.fromtimestamp(file.mtime)
+                ui.label(mtime.strftime("%Y-%m-%d %H:%M")).classes('font-mono')
+
+    def text_file_preview():
+        # fixme: markdown 渲染的时候，image 路径似乎会被转换，然后用 http 获取，这是不对的，需要处理。
+        with open(filepath, 'r', encoding="utf-8") as f:
+            content = f.read(5000)  # 限制预览长度
+        ui.code(content).classes('''
+            w-full 
+            max-w-[calc(100%-1rem)]  /* 保留边距空间 */
+            whitespace-pre-wrap
+            break-words
+            bg-gray-50
+            p-4
+            rounded
+        ''')
+
+    filepath = f"{NFS_SERVICE_FILES_DIR}/{file.filepath}"
     filename = file.filename
     ext = os.path.splitext(filename)[1].lower()
 
@@ -93,68 +167,19 @@ def _create_render_dialog(file: File, download_on_click) -> ui.dialog:
 
             # 内容区域容器
             with ui.scroll_area().classes('flex-1 w-full overflow-x-hidden'):  # 自适应高度
+                # todo: 使用重构、设计模式等方法消除显示 if-else。比如：方法提取以消除冗长的条件判断、策略模式等
+
                 # 根据文件类型显示不同内容
-                # todo: 使用重构、设计模式等方法消除显示 if-else
-                if ext in ['.png', '.jpg', '.jpeg', '.gif']:  # 图片预览
-                    with ui.row().classes('w-full h-full justify-center items-center'):
-                        # 未能生效。但是莫名其妙又好了。deepseek 简直是前端的噩梦！
-                        # print(filepath)
-                        # image = Image.open(filepath)
-                        # thread_pool.submit(lambda: image.show())
-                        # todo: 在图片预览部分添加尺寸适配
-                        ui.image(filepath).classes('max-h-full object-contain')
-
-                        # deepseek
-                        # # 在图片预览部分添加尺寸适配
-                        # img = Image.open(filepath)
-                        # img.thumbnail((1200, 800))  # 限制最大尺寸
-                        # img_bytes = io.BytesIO()
-                        # img.save(img_bytes, format='PNG')
-                        # ui.image(img_bytes.getvalue()).classes('max-w-full max-h-full object-contain')
-                elif ext == '.pdf':  # PDF 预览（需要安装 pyppdf）
-                    ui.html(f'''
-                        <iframe 
-                            src="{filepath}"
-                            style="
-                                width: 100% !important;
-                                height: 100vh !important;  /* 动态高度 */
-                                max-height: calc(90vh - 100px); /* 预留标题和按钮空间 */
-                                border: none;
-                            "
-                        ></iframe>
-                    ''').classes('w-full h-full')
-
+                if ext in ['.png', '.jpg', '.jpeg', '.gif']:
+                    picture_preview()
+                elif ext == '.pdf':
+                    pdf_preview()
                 elif ext in ['.mp4', '.webm', '.ogg']:  # 视频预览
-                    ui.video(filepath).classes('w-full h-auto max-h-full')
+                    video_preview()
                 elif ext in ['.csv', '.txt', '.md']:  # 文本文件预览
-                    # fixme: markdown 渲染的时候，image 路径似乎会被转换，然后用 http 获取，这是不对的，需要处理。
-                    with open(filepath, 'r', encoding="utf-8") as f:
-                        content = f.read(5000)  # 限制预览长度
-                    ui.code(content).classes('''
-                        w-full 
-                        max-w-[calc(100%-1rem)]  /* 保留边距空间 */
-                        whitespace-pre-wrap
-                        break-words
-                        bg-gray-50
-                        p-4
-                        rounded
-                    ''')
-
+                    text_file_preview()
                 else:
-                    # 元数据展示优化
-                    with ui.column().classes('w-full min-w-0'):
-                        ui.label("⚠️ 文件类型不支持直接预览").classes('text-red-500 font-medium')
-                        ui.separator()
-                        with ui.row().classes('items-center gap-2'):
-                            ui.icon('insert_drive_file', size='lg', color='blue')
-                            ui.label(filename).classes('font-mono')
-                        with ui.grid().classes('grid-cols-2 gap-2'):
-                            ui.label("文件大小:").classes('text-gray-600')
-                            ui.label(f"{file.filesize / 1024:.1f} KB").classes('font-mono')
-                            ui.label("修改时间:").classes('text-gray-600')
-                            mtime = datetime.fromtimestamp(file.mtime)
-                            ui.label(mtime.strftime("%Y-%m-%d %H:%M")).classes('font-mono')
-
+                    unsupported_preview()
     return dialog
 
 
