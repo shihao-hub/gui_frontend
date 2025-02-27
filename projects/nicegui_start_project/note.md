@@ -20,4 +20,6 @@
    质疑 django，理解 django，成为 django
    ```
 4. 25-02-23，sql 语句用 Java 学习吧？知识星球可以看起来了！
-5. 
+5. 感觉 nicegui 的 with 嵌套结构与 react 似乎有共通之处。with 中的内容似乎可以封装为组件？nicegui 可以让
+   开发者几乎不需要写 html 代码，只需要使用 python。react 似乎也是如此，只需要使用 js。
+6. 
