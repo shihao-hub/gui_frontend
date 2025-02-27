@@ -38,6 +38,10 @@ async def time_workshop():
 
     # note: 约定大于配置！
 
+    # 注意，Js 存在变量提升多半是因为 js 是单线程的。
+    # Python 有类似的变量提升效果，但是 Python 并非单线程呀？
+    # 可是虽然 Python 不是单线程，但是只要保证线程执行的函数并未使用 nonlocal 变量，应该没问题吧？
+
     def get_modules():
         res = []
         for name in os.listdir(f"{CURRENT_PATH}/tab_widgets"):
@@ -55,6 +59,8 @@ async def time_workshop():
                 logger.error(f"{e}")
         return res
 
+    # todo: 不要用导航栏，可以用侧边栏！
+
     UiTabsElement = collections.namedtuple("ui_tabs_element", ["module", "tab"])
     ui_tabs: List[UiTabsElement] = []
 
@@ -63,6 +69,7 @@ async def time_workshop():
         for module in get_modules():
             tab = ui.tab(module.TITLE, icon=module.ICON)
             ui_tabs_element = UiTabsElement(module, tab)
+            # print("tab parent: ", tab.parent)
             ui_tabs.append(ui_tabs_element)
 
     # 选项卡面板
