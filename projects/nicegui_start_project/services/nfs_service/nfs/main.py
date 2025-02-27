@@ -1,3 +1,12 @@
+"""
+### 规格
+1. 意料之外的异常发生时，会返回包含错误信息的 JSONResponse { detail: str }
+   > 注意事项：为什么很多时候，前后端交换返回的都是 200，通过返回的 json 的 code 字段来区分？
+   > 就我个人经历发现，ui.download 返回值不是 200 就会有问题... 有点无语
+
+"""
+
+import configparser
 import json
 import os.path
 import sys
@@ -11,13 +20,15 @@ from loguru import logger
 import uvicorn
 from fastapi import FastAPI, Query, File, UploadFile, HTTPException, status
 from fastapi.requests import Request
+from fastapi.exceptions import HTTPException
+from fastapi.responses import JSONResponse
 from starlette.responses import StreamingResponse
 
-# BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent
-NFS_BASE_DIR = Path(__file__).parent.parent
-NFS_SOURCE_DIR = Path(__file__).parent
+# 运行 main.py，python 似乎会认为 main.py 的所在目录就是 source 目录，所以 nfs.settings 包 python.exe 能找到！
+from nfs.settings import NFS_BASE_DIR, configs
 
 FILE_STORAGE_PATH = f"{NFS_BASE_DIR}/files"
+PORT = int(configs.get("port"))
 
 # 统一日志目录
 # LOG_DIR = Path(f"{BASE_DIR}/logs")
@@ -32,7 +43,8 @@ logger.configure(
         # ----------------------------
         {
             "sink": sys.stderr,
-            "format": "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level: <8}</level> | <cyan>{module}:{line}</cyan> | <level>{message}</level>",
+            "format": "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level: <8}</level> | <cyan>{module}:{"
+                      "line}</cyan> | <level>{message}</level>",
             "level": "DEBUG",
             "colorize": True,
         },
@@ -65,10 +77,24 @@ logger.configure(
     activation=[("", True)],  # 启用所有模块日志
 )
 
-# todo: 如何做到支持 . .. 导入呢？
-
-
 app = FastAPI()
+
+
+@app.exception_handler(Exception)
+async def universal_handler(request: Request, exc: Exception):
+    if isinstance(exc, HTTPException):  # note: 这居然需要自定义？为什么 fastapi 默认不处理？
+        # 保留原始 HTTPException 的响应结构
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={"detail": exc.detail},
+            headers=exc.headers
+        )
+    else:
+        # 只要错了都返回 json response ... 但是 StreamingResponse|JSONResponse 这混用岂不是需要 instanceof 参与了？
+        return JSONResponse(
+            status_code=500,
+            content={"detail": str(exc)},
+        )
 
 
 @app.post("/api/upload")
@@ -111,4 +137,4 @@ def download(request: Request, uid: str = Query(...)):
 
 if __name__ == '__main__':
     logger.info("nfs service starts successfully.")
-    uvicorn.run(app, host="localhost", port=12001, reload=False)
+    uvicorn.run(app, host="localhost", port=PORT, reload=False)
