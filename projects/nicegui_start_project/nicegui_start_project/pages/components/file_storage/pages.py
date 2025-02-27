@@ -213,7 +213,7 @@ def _fill_file_card(file_card, file: File, content: BinaryIO = None):
                     async def _perform_delete():
                         try:
                             # 删除数据库记录
-                            res = await sync_to_async(lambda: File.objects(id=file.id).delete())
+                            res = await File.delete(id=file.id)
                             logger.info(f"{type(res)}\t{res}")
 
                             # 删除物理文件（根据你的存储服务实现）
@@ -261,6 +261,7 @@ def _fill_file_card(file_card, file: File, content: BinaryIO = None):
                             download_button.disable()
 
                             ui.download(f"{configs.PAGE_PATH}/api/download?uid={file.filepath}")
+
                             # await ui.run_javascript(f'downloadFile("{file.filepath}")')
 
                             def get_wait_time():
@@ -330,6 +331,21 @@ def _add_paste_upload_area(context: Optional[Dict] = None):
         ui.add_body_html(f""" <script>{read_js(f"{configs.STATIC_URL}/paste.js")}</script> """)
 
 
+class Model:
+    pass
+
+
+class View:
+    def __init__(self):
+        pass
+
+
+class Controller:
+    def __init__(self, model: Model, view: View):
+        self.model = model
+        self.view = view
+
+
 @ui.page(configs.PAGE_PATH, title=configs.PAGE_TITLE)
 async def file_storage():
     async def on_upload(event: UploadEventArguments):
@@ -346,7 +362,7 @@ async def file_storage():
             return filesize
 
         data = dict(filename=event.name, filepath=filepath, filesize=iife_get_filesize(), mtime=time.time())
-        res: File = await sync_to_async(lambda: File.objects.create(**data))
+        res: File = await File.create(**data)
         logger.info(f"{type(res)}\t{res}")
 
         add_element(file_container, res, content=event.content)
@@ -387,5 +403,5 @@ async def file_storage():
             ui.label("已上传文件").classes('text-xl font-semibold mb-4')
             # file_container = ui.row().classes('w-full gap-4 overflow-x-auto')
             file_container = ui.column().classes('w-full gap-4')  # 原垂直布局
-            for file in await sync_to_async(lambda: File.objects.all()):
+            for file in await File.get_all():
                 add_element(file_container, file)
