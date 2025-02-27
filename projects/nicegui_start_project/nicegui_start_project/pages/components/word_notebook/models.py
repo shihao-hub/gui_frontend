@@ -32,7 +32,7 @@ class Word(engine.DynamicDocument):
         @clean_field_tear_down("word")
         def iife_clean_word():
             word = self.word.strip()
-            print(word)
+            logger.info(word)
             # check that the word field is for words
             # if word.isalpha():
             #     self.word = word
