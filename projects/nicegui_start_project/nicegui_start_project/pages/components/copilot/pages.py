@@ -45,9 +45,9 @@ class ChatDeepSeekAI:
     def __init__(self,
                  deepseek_api_key: str,
                  *,
-                 model_name: str = "deepseek-chat",  # deepseek-reasoner
+                 model_name: str = configs.DEEP_SEEK_MODEL_NAME,
                  streaming: bool = True):
-        self.base_url = "https://api.deepseek.com"
+        self.base_url = configs.DEEP_SEEK_BASE_URL
 
         self.deepseek_api_key = deepseek_api_key
         self.model_name = model_name
