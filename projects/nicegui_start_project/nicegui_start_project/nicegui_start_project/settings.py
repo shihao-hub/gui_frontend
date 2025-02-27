@@ -21,3 +21,7 @@ configs = get_configs(CONFIG_FILE_PATH)
 HOST = configs.get("HOST")
 PORT = configs.get("PORT")
 BASE_URL = f"http://{HOST}:{PORT}/"  # NOQA
+
+NFS_SERVICE_STARTUP_ENTRY_PATH = f"{BASE_DIR}/services/nfs_service/nfs/main.py"
+COMPONENTS_ROOT_DIR = f"{SOURCE_DIR}/pages/components"
+COMPONENTS_PACKAGE_NAME = "pages.components"
