@@ -1,9 +1,11 @@
 import atexit
 import importlib
+import logging
 import os
 import pprint
 import subprocess
 import sys
+import traceback
 from typing import List, Callable, Dict
 
 import mongoengine as engine
@@ -13,13 +15,12 @@ from loguru import logger
 from nicegui import ui, app
 
 from nicegui_start_project.settings import (
-    HOST, PORT, BASE_URL, SOURCE_DIR, BASE_DIR,
-    DATABASE, DATABASE_ALIAS
+    HOST, PORT, BASE_URL,
+    DATABASE, DATABASE_ALIAS,
+    NFS_SERVICE_STARTUP_ENTRY_PATH,
+    COMPONENTS_ROOT_DIR,
+    COMPONENTS_PACKAGE_NAME,
 )
-
-NFS_SERVICE_STARTUP_ENTRY_PATH = f"{BASE_DIR}/services/nfs_service/nfs/main.py"
-COMPONENTS_ROOT_DIR = f"{SOURCE_DIR}/pages/components"
-COMPONENTS_PACKAGE_NAME = "pages.components"
 
 
 def init_database():
@@ -27,11 +28,58 @@ def init_database():
 
 
 def init_logger():
-    pass
+    # 禁用标准logging模块
+    logging.disable(logging.CRITICAL)
+
+    # 移除默认配置（避免与自定义配置冲突）
+    logger.remove()
+
+    # 基础配置常量
+    log_level = os.getenv("LOG_LEVEL", "DEBUG")  # 环境变量优先
+    log_format = (
+        "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | "
+        "<level>{level: <8}</level> | "
+        "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> | "
+        "<level>{message}</level>"
+    )
+
+    # 核心配置函数
+    def configure_logger():
+        # 控制台输出配置
+        logger.add(
+            sys.stderr,
+            level=log_level,
+            format=log_format,
+            backtrace=True,  # 显示完整异常堆栈
+            diagnose=True,  # 显示变量值调试信息（生产环境应关闭）
+            enqueue=True,  # 线程安全模式
+        )
+
+        # 文件输出配置（按需求选择）
+        logger.add(
+            "logs/app_{time:YYYY-MM-DD}.log",
+            rotation="00:00",  # 每天零点切割
+            retention="30 days",  # 保留30天
+            compression="zip",  # 压缩旧日志
+            level="INFO",  # 文件日志级别
+            enqueue=True,
+            format=log_format,
+        )
+
+    configure_logger()
+
+    # 可选：捕获所有未处理异常
+    def handle_exception(exc_type, exc_value, exc_traceback):
+        logger.exception(f"Uncaught exception occurred: ")
+        sys.__excepthook__(exc_type, exc_value, exc_traceback)
+
+    # sys.excepthook = handle_exception
 
 
 def start_services() -> Callable:
     python_exe = sys.executable  # deepseek 666
+
+    # fixme: 启动失败为什么没有提示？
 
     # 启动另一个程序（非阻塞）
     nfs_service = subprocess.Popen(
@@ -153,8 +201,8 @@ def main():
                 else:
                     logger.warning(f"Module '{dirname}' does not have 'PAGE_TITLE' or 'PAGE_PATH' defined.")
             except Exception as e:
-                logger.error(f"Error importing module {dirname}: {e}")
-    print(pprint.pformat([f"{e.path} - {e.methods}" for e in app.routes if isinstance(e, APIRoute)]))
+                logger.error(f"Error importing module {dirname}: {e}\n{traceback.format_exc()}")
+    logger.info(pprint.pformat([f"{e.path} - {e.methods}" for e in app.routes if isinstance(e, APIRoute)]))
     ui.run(host=HOST, port=PORT, reload=False, show=False, favicon="🚀")
 
 
