@@ -33,13 +33,6 @@ from . import configs
 NFS_SERVICE_FILES_DIR = f"{settings.BASE_DIR}/services/nfs_service/files"
 
 
-async def to_upload_file(filename: str, content: BinaryIO) -> str:
-    # content: tempfile.SpooledTemporaryFile
-    # print(content, len(content.read()))
-    data = await upload_file(filename, content)
-    return data.get("uid")
-
-
 def _is_text_file(filename: str, content: BinaryIO) -> bool:
     if platform.system() in ["Linux", "Darwin"]:
         filepath = ""
@@ -67,7 +60,7 @@ def _is_text_file(filename: str, content: BinaryIO) -> bool:
     return True
 
 
-class PreviewUtils:
+class _PreviewUtils:
     """ staticmethod 类 """
 
     @staticmethod
@@ -84,7 +77,7 @@ def _create_render_dialog(file: File, download_on_click) -> ui.dialog:
     def picture_preview():
         with ui.row().classes('w-full h-full justify-center items-center'):
             # 未能生效。但是莫名其妙又好了。deepseek 简直是前端的噩梦！
-            # print(filepath)
+            # logger.info(filepath)
             # image = Image.open(filepath)
             # thread_pool.submit(lambda: image.show())
             # todo: 在图片预览部分添加尺寸适配
@@ -183,15 +176,8 @@ def _create_render_dialog(file: File, download_on_click) -> ui.dialog:
     return dialog
 
 
-def _fill_file_card_fns(context: Dict) -> Dict:
-    file = context.get("file")
-    file_card = context.get("file_card")
-
-    return locals()
-
-
 # 在文件卡片创建函数外部定义状态管理类
-class DownloadState:
+class _DownloadState:
     def __init__(self):
         self.states = {}  # 使用字典存储每个文件的下载状态
 
@@ -202,7 +188,7 @@ class DownloadState:
         self.states[file_id] = value
 
 
-download_state = DownloadState()
+download_state = _DownloadState()
 
 
 def _fill_file_card(file_card, file: File, content: BinaryIO = None):
@@ -228,7 +214,7 @@ def _fill_file_card(file_card, file: File, content: BinaryIO = None):
                         try:
                             # 删除数据库记录
                             res = await sync_to_async(lambda: File.objects(id=file.id).delete())
-                            print(type(res), res)
+                            logger.info(f"{type(res)}\t{res}")
 
                             # 删除物理文件（根据你的存储服务实现）
                             def delete_file():
@@ -273,7 +259,9 @@ def _fill_file_card(file_card, file: File, content: BinaryIO = None):
                         try:
                             download_state.set_state(file.id, True)
                             download_button.disable()
+
                             ui.download(f"{configs.PAGE_PATH}/api/download?uid={file.filepath}")
+                            # await ui.run_javascript(f'downloadFile("{file.filepath}")')
 
                             def get_wait_time():
                                 # todo: 根据文件大小估计等待时间（考虑最好情况）
@@ -287,7 +275,7 @@ def _fill_file_card(file_card, file: File, content: BinaryIO = None):
 
                                 # 计算理论下载时间（秒）
                                 res = max(min(file_size / estimated_speed, max_wait), min_wait)
-                                print(f"理论下载时间：{res:.2f}秒")
+                                logger.info(f"理论下载时间：{res:.2f}秒")
                                 return res
 
                             wait_time = get_wait_time()
@@ -345,7 +333,10 @@ def _add_paste_upload_area(context: Optional[Dict] = None):
 @ui.page(configs.PAGE_PATH, title=configs.PAGE_TITLE)
 async def file_storage():
     async def on_upload(event: UploadEventArguments):
-        filepath = await to_upload_file(event.name, event.content)
+        # event.content: tempfile.SpooledTemporaryFile
+        res_data = await upload_file(event.name, event.content)
+        data = res_data.unwrap()
+        filepath = data.get("uid")
 
         def iife_get_filesize():  # fixme: iife 显然是 runnable，即不应该有返回值？或者说 iife 就是一次性代码的意思？
             binary_file = event.content
@@ -356,7 +347,7 @@ async def file_storage():
 
         data = dict(filename=event.name, filepath=filepath, filesize=iife_get_filesize(), mtime=time.time())
         res: File = await sync_to_async(lambda: File.objects.create(**data))
-        print(type(res), res)
+        logger.info(f"{type(res)}\t{res}")
 
         add_element(file_container, res, content=event.content)
 
@@ -364,6 +355,9 @@ async def file_storage():
 
     # todo: 优化 add css 的方式
     ui.add_head_html(f""" <style>{read_css(f"{configs.STATIC_URL}/index.css")}</style> """)
+
+    # 添加前端下载逻辑
+    ui.add_body_html(f""" <script>{read_js(f"{configs.STATIC_URL}/download_file.js")}</script> """)
 
     with ui.column().classes('w-full max-w-4xl mx-auto p-8'):
         ui.label("文件存储中心").classes('text-3xl font-bold mb-8')
