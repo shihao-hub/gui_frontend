@@ -1,5 +1,6 @@
 from typing import Dict, Optional
 
+from loguru import logger
 from lxml import etree
 
 _configs: Optional[Dict] = None
@@ -32,10 +33,10 @@ def get_configs(config_file_path: str) -> Dict:
                 name = setting.find("name").text
                 value = setting.find("value").text
                 type_node = setting.find("type")
-                # print(type(type_node), type_node)
+                # logger.info(type(type_node), type_node)
                 _type = type_node if type_node is None else type_node.text
                 res[name] = cast_value()
-            # print(res)
+            # logger.info(res)
             return res
 
         _configs = _parser_configs_xml_file()
