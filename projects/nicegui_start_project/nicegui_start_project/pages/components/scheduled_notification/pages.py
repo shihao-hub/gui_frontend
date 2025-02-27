@@ -11,6 +11,8 @@
 """
 import time
 
+from loguru import logger
+
 from nicegui import ui
 
 from . import configs
@@ -50,7 +52,7 @@ async def scheduled_notification():
 
 
 if __name__ == '__main__':
-    print(get_current_ymd())
-    print(get_current_hm())
+    logger.info(get_current_ymd())
+    logger.info(get_current_hm())
 
     pass
