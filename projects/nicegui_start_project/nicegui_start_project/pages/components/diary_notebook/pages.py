@@ -31,7 +31,7 @@ def iife_create_tables():
             id INTEGER PRIMARY KEY,
             user_id INTEGER,
             title TEXT,
-            content TEXT,
+            content TEXT
         );
         """)
 
