@@ -9,8 +9,10 @@
 
 import asyncio
 import os
+import traceback
 from typing import Dict, Any, Optional, List, AsyncGenerator
 
+import httpx
 from openai import AsyncOpenAI
 from loguru import logger
 from dotenv import load_dotenv
@@ -53,7 +55,9 @@ class ChatDeepSeekAI:
         self.model_name = model_name
         self.streaming = streaming
 
-        self.client = AsyncOpenAI(api_key=self.deepseek_api_key, base_url=self.base_url)
+        # self.client = AsyncOpenAI(api_key=self.deepseek_api_key, base_url=self.base_url)
+        self.client = AsyncOpenAI(api_key=self.deepseek_api_key, base_url=self.base_url,
+                                  http_client=httpx.AsyncClient(verify=False))  # verify=False 为临时改动，生产环境不允许
         self.conversation = ConversationManager()
 
     async def astream(self,
@@ -73,12 +77,12 @@ class ChatDeepSeekAI:
                     *self.conversation.history[-ConversationManager.DEFAULT_MAX_HISTORY:]  # 携带最近3组对话历史
                 ],
                 stream=True,
-                temperature=1.3  # https://api-docs.deepseek.com/zh-cn/quick_start/parameter_settings
+                temperature=1.3,  # https://api-docs.deepseek.com/zh-cn/quick_start/parameter_settings
             )
 
             full_response = []
             async for chunk in stream:
-                content = chunk.choices[0].delta.content
+                content = chunk.choices[0].delta.content  # 深度思考的思考过程这里没有获取，这对于用户来说响应时间太长了！
                 if content:
                     full_response.append(content)
                     yield content
@@ -86,6 +90,7 @@ class ChatDeepSeekAI:
             if full_response:
                 self.conversation.add_message("assistant", "".join(full_response))
         except Exception as e:
+            logger.error(f"{e}\n{traceback.format_exc()}")
             error_msg = f"❌ 请求失败: {str(e)}"
             yield error_msg
             self.conversation.add_message("assistant", error_msg)
@@ -161,7 +166,7 @@ async def copilot():
 
     with ui.footer().classes('bg-white'), ui.column().classes('w-full max-w-3xl mx-auto my-6'):
         with ui.row().classes('w-full no-wrap items-center'):
-            placeholder = '有问题，尽管问，enter 换行，shift + enter 发送' if DEEP_SEEK_API_KEY != 'not-set' else \
+            placeholder = '有问题，尽管问，enter 换行，ctrl + enter 发送' if DEEP_SEEK_API_KEY != 'not-set' else \
                 'Please provide your DEEP_SEEK_API_KEY in the Python script first!'
             text = ui.textarea(placeholder=placeholder).props('rounded outlined rows=3 input-class=mx-3') \
                 .classes('w-full self-center').on('keydown', send)
