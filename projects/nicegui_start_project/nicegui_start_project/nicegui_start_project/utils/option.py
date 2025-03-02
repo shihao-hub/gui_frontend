@@ -18,19 +18,19 @@ class Maybe(Generic[T]):
         self._value = value
 
     @classmethod
-    def of(cls, value: T) -> "Maybe[T]":
+    def of(cls, value: T):  # -> "Maybe[T]"，智能提示不存在了，为什么...
         """ 非空值构造（若值为空则抛 ValueError） """
         if value is None:
             raise ValueError("Maybe.of() 不接受 None，请使用 Maybe.of_nullable()")
         return cls(value)
 
     @classmethod
-    def of_nullable(cls, value: TypingOptional[T]) -> "Maybe[T]":
+    def of_nullable(cls, value: TypingOptional[T]):  # -> "Maybe[T]"
         """ 可空值构造 """
         return cls(value)
 
     @classmethod
-    def empty(cls) -> "Maybe[Any]":
+    def empty(cls):  # -> "Maybe[Any]"
         """ 空实例 """
         return cls(None)
 

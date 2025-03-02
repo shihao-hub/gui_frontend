@@ -1,6 +1,8 @@
 import contextlib
 import sqlite3
+import re
 from pathlib import Path
+from typing import Optional, List
 
 from nicegui import ui
 
@@ -39,95 +41,94 @@ def iife_create_tables():
 iife_create_tables()
 
 
-@ui.page(configs.PAGE_PATH + "/login", title=configs.PAGE_TITLE)
-async def login_or_register():
-    def create_diary(user_id):
-        title = ui.input('标题').value
-        content = ui.textarea('内容').value
-        with content():
-            cursor.execute('INSERT INTO diaries (user_id, title, content) VALUES (?, ?, ?)', (user_id, title, content))
-        ui.notify('日记创建成功')
-
-    def list_diaries(user_id):
-        cursor.execute('SELECT * FROM diaries WHERE user_id=?', (user_id,))
-        diaries = cursor.fetchall()
-        for diary in diaries:
-            ui.label(f'{diary[2]} - {diary[3]}')
-
-    def login():
-        username = ui.input('用户名').value
-        password = ui.input('密码').props('type="password"').value
-        cursor.execute('SELECT * FROM users WHERE username=? AND password=?', (username, password))
-        if cursor.fetchone():
-            ui.notify('登录成功')
-        else:
-            ui.notify('用户名或密码错误')
-
-    def register():
-        username = ui.input('用户名').value
-        password = ui.input('密码').props('type="password"').value
-        cursor.execute('SELECT * FROM users WHERE username=?', (username,))
-        if cursor.fetchone():
-            ui.notify('用户名已存在，注册失败')
-            return
-        with connect():
-            cursor.execute('INSERT INTO users (username, password) VALUES (?, ?)', (username, password))
-        ui.notify('注册成功')
-
-    # 登录/注册页面
-    ui.button('登录', on_click=login)
-    ui.button('注册', on_click=register)
-
-
 @ui.page(configs.PAGE_PATH, title=configs.PAGE_TITLE)
 async def diary_notebook():
-    ui.add_head_html('<style>body { background: #f0f2f5; }</style>')
+    # todo: 1. SLAP 2. **组合函数模式** 3. 面向对象思想
+    # create_left_sidebar()
+    # create_main_content()
+    # create_right_sidebar()
+    # login_or_register()
+    # 初始化笔记本数据
 
-    def create_auth_form():
-        """ 创建登录/注册表单组件 """
+    class NoteEntry:
+        def __init__(self, title: str, parent: Optional['NoteEntry'] = None):
+            self.id = id(self)
+            self.title = title
+            self.content = "# New Note\nStart writing here..."
+            self.parent = parent
+            self.children: List['NoteEntry'] = []
+            self.expanded = True
 
-        # 响应式变量
-        login_mode = ui.toggle([True, False], value=True).props('hidden')  # True=登录模式，False=注册模式
+    class Notebook:
+        def __init__(self):
+            self.root = NoteEntry("我的笔记")
+            self.current_note: Optional[NoteEntry] = None
 
-        def switch_form(is_login):
-            """切换登录/注册表单"""
-            login_mode.value = is_login
-            # 动态更新按钮样式
-            for btn in [login_form, register_form]:
-                btn.style(replace=f"background:{'#e8f4ff' if is_login else 'white'}")
+    notebook = Notebook()
 
-        def handle_submit(is_login):
-            """处理表单提交"""
-            if is_login:
-                print(f"登录：{username.value}, {password.value}")
-            else:
-                if new_password.value != confirm_pwd.value:
-                    ui.notify("两次密码不一致！", type='negative')
-                    return
-                print(f"注册：{new_username.value}, {new_password.value}")
+    def create_tree_node(note: NoteEntry):
+        with ui.element('div').classes('ml-4'):
+            with ui.row().classes('items-center gap-1'):
+                ui.icon('expand_more', size='sm').bind_visibility_from(note, 'expanded')
+                ui.icon('chevron_right', size='sm').bind_visibility_from(note, 'expanded', lambda x: not x)
+                btn = ui.button(note.title, on_click=lambda: select_note(note))
+                btn.classes('text-left justify-start').props('flat')
+                ui.button(icon='add', on_click=lambda: create_child(note)).props('flat dense')
 
-        with ui.card().classes("w-80 p-6 gap-4"):
-            # 切换按钮
-            with ui.row().classes("w-full justify-between"):
-                ui.button("登录", on_click=lambda: switch_form(True)).classes("flex-1")
-                ui.button("注册", on_click=lambda: switch_form(False)).classes("flex-1")
+            if note.children:
+                with ui.element('div').bind_visibility_from(note, 'expanded'):
+                    for child in note.children:
+                        create_tree_node(child)
 
-            # 动态表单区域
-            with ui.column().bind_visibility_from(login_mode, 'value') as login_form:
-                username = ui.input("用户名").classes("w-full")
-                password = ui.input("密码", password=True).classes("w-full")
-                ui.button("登录", on_click=lambda: handle_submit(True)).classes("w-full")
+    def generate_toc(content: str):
+        toc = []
+        headers = re.findall(r'^(#{1,3})\s+(.*)', content, re.MULTILINE)
+        for level, title in headers:
+            indent = 'pl-%d' % (len(level) * 2)
+            link = re.sub(r'[^a-zA-Z0-9 ]', '', title).lower().replace(' ', '-')
+            toc.append((len(level), title, link))  # 插入元组（Array -> Named Array）
+        return toc
 
-            with ui.column().bind_visibility_from(login_mode, 'value',
-                                                  value=lambda v: not v) as register_form:
-                new_username = ui.input("新用户名").classes("w-full")
-                new_password = ui.input("设置密码", password=True).classes("w-full")
-                confirm_pwd = ui.input("确认密码", password=True).classes("w-full")
-                ui.button("注册", on_click=lambda: handle_submit(False)).classes("w-full")
+    def update_preview():
+        """ 更新内容区  """
+        notebook.current_note.content = editor.value
+        toc_container.clear()
+        with toc_container:
+            for level, title, link in generate_toc(editor.value):
+                ui.link(title, f'#{link}').classes(f'text-sm pl-{level * 4} hover:text-blue-600')
 
-            # 底部提示
-            ui.separator()
-            ui.label("忘记密码？").classes("text-sm text-gray-500 cursor-pointer")
+    def create_child(parent: NoteEntry):
+        new_note = NoteEntry("New Note", parent)
+        parent.children.append(new_note)  # 建立双向关联
+        tree_container.clear()
+        with tree_container:
+            create_tree_node(notebook.root)
+        select_note(new_note)
 
-    with ui.column().classes("h-screen items-center justify-center"):
-        create_auth_form()
+    def select_note(note: NoteEntry):
+        # todo: 持久化
+        notebook.current_note = note
+        editor.value = note.content
+        update_preview()
+
+    # 界面布局
+    with ui.row().classes('w-full h-screen'):
+        # 左侧导航栏
+        #   可以封装为 create_left_sidebar()，但是 tree_container 的变量提升的作用就丢失了，不太好吧？
+        #   这也体现了 nicegui 的小项目的宿命！
+        with ui.column().classes('w-64 bg-gray-100 h-full p-4 border-r'):
+            ui.label('Notebooks').classes('text-xl font-bold mb-4')
+            with ui.column().classes('w-full') as tree_container:
+                create_tree_node(notebook.root)
+
+        # 中间编辑区
+        with ui.column().classes('flex-1 p-4 min-w-[600px]'):
+            editor = ui.textarea(label='Markdown Editor').classes('w-full h-full')
+            editor.on('input', lambda: update_preview())
+
+        # 右侧目录
+        with ui.column().classes('w-64 bg-gray-50 h-full p-4 border-l') as toc_container:
+            ui.label('Table of Contents').classes('text-lg font-bold mb-4')
+
+    # 初始化选择第一个笔记
+    select_note(notebook.root)

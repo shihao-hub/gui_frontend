@@ -57,7 +57,7 @@ def init_logger():
 
         # 文件输出配置（按需求选择）
         logger.add(
-            "logs/app_{time:YYYY-MM-DD}.log",
+            "../logs/app_{time:YYYY-MM-DD}.log",
             rotation="00:00",  # 每天零点切割
             retention="30 days",  # 保留30天
             compression="zip",  # 压缩旧日志

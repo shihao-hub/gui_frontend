@@ -167,9 +167,9 @@ def _create_render_dialog(file: File, download_on_click) -> ui.dialog:
                     picture_preview()
                 elif ext == '.pdf':
                     pdf_preview()
-                elif ext in ['.mp4', '.webm', '.ogg']:  # 视频预览
+                elif ext in ['.mp4', '.webm', '.ogg']:
                     video_preview()
-                elif ext in ['.csv', '.txt', '.md']:  # 文本文件预览
+                elif ext in ['.csv', '.txt', '.md', '.py', '.js', '.java']:
                     text_file_preview()
                 else:
                     unsupported_preview()
@@ -191,7 +191,34 @@ class _DownloadState:
 download_state = _DownloadState()
 
 
+def get_add_metadata_on_click(file: File):
+    async def on_click():
+        async def confirm_on_click():
+            file.brief_description = brief.value
+            await sync_to_async(lambda: file.save())
+            metadata_dialog.close()
+
+        # 创建元数据对话框
+        with ui.dialog() as metadata_dialog, ui.card().classes('p-4 min-w-[300px]'):
+            with ui.column().classes('gap-4'):
+                with ui.row().classes('w-full items-center gap-2'):
+                    ui.label('简要描述：').classes('text-sm min-w-[80px]')
+                    brief = ui.textarea(placeholder='请输入简要描述') \
+                        .props('outlined outlined rows=2') \
+                        .classes('flex-grow')
+                    brief.value = file.brief_description
+                with ui.row().classes('w-full justify-end gap-2'):
+                    ui.button('取消', on_click=metadata_dialog.close).props('flat')
+                    ui.button('确定', color='green', on_click=confirm_on_click).props('unelevated')
+        metadata_dialog.open()
+
+    return on_click
+
+
 def _fill_file_card(file_card, file: File, content: BinaryIO = None):
+    # todo: file_card 可以添加个元数据功能，用于描述该文件的作用。
+    #       如果这样的话，数据该如何存储呢？这是一个问题。
+    #       此处我也有个领悟：在新增需求的时候往往还需要捋一下整体结构。
     with file_card:  # [!code ++]
         with ui.row().classes('items-center gap-4'):
             ui.icon('description', size='lg', color='primary')
@@ -210,6 +237,9 @@ def _fill_file_card(file_card, file: File, content: BinaryIO = None):
                 # 水平三
                 # 操作按钮区域保持右侧对齐
                 with ui.row().classes('mt-4 justify-end gap-2'):  # [!code ++]
+                    # todo: 这应该是属于数据和 UI 耦合了吧？相当难受啊。
+                    #       能否优化？减少 closure up value 的数量。
+                    #       比如：up value 只包含元素和部分重点变量？
                     async def _perform_delete():
                         try:
                             # 删除数据库记录
@@ -305,6 +335,10 @@ def _fill_file_card(file_card, file: File, content: BinaryIO = None):
                     # 添加渲染按钮
                     render_button = ui.button(icon='preview', color='blue', on_click=render_on_click)
                     render_button.tooltip('预览文件').props('flat dense')
+
+                    # 添加增加元数据的按钮
+                    add_metadata_button = ui.button(icon='add', color='blue', on_click=get_add_metadata_on_click(file))
+                    add_metadata_button.tooltip('查看和添加元数据').props('flat dense')
 
 
 def add_element(file_container: Element, file: File, content: BinaryIO = None) -> None:

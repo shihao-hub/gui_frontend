@@ -1,0 +1,9 @@
+MVC: Model, View, Controller
+
+MTV: Model, Template, View
+
+MSVC: Model + Service, View, Controller
+
+控制器是中间人角色，协调模型和视图，连接数据逻辑和用户操作。
+
+我认为 MV 是不允许有直接交互的！他们之间的交互应该通过 C！

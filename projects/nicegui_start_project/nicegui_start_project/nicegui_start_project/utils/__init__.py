@@ -12,16 +12,20 @@ __all__ = [
 
     "thread_pool",
 
+    "Maybe",
+    "Result",
+
+    "catch_unhandled_exception",
     "get_random_port",
     "get_package_path",
-
-    "Maybe",
-    "Result"
 ]
 
+import functools
+import inspect
 import socket
+import traceback
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Callable
 
 from loguru import logger
 
@@ -67,6 +71,23 @@ def get_package_path(file: str):
     relative_path = relative_path.replace("\\", ".")
     relative_path = relative_path.replace("/", ".")
     return relative_path[: -len(extension)]
+
+
+def catch_unhandled_exception(func):
+    if inspect.iscoroutine(func):
+        async def wrapper(*args, **kwargs):
+            try:
+                return await func(*args, **kwargs)
+            except Exception as e:
+                logger.error(f"{e}\n{traceback.format_exc()}")
+    else:
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            try:
+                return func(*args, **kwargs)
+            except Exception as e:
+                logger.error(f"{e}\n{traceback.format_exc()}")
+    return wrapper
 
 
 if __name__ == '__main__':

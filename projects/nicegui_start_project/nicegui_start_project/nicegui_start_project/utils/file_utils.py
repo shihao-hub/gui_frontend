@@ -4,8 +4,27 @@ __all__ = [
 ]
 
 import re
-
 from typing import Literal
+
+import chardet
+
+
+def read_text_file(filename: str):
+    # check_text_file
+    # probe_file_coding
+    # read_file
+    def check_text_file():
+        extensions = {}
+
+    def read_file():
+        with open(filename, "rb") as f:
+            raw_data = f.read()
+        encoding = chardet.detect(raw_data).get("encoding")
+        assert encoding is not None
+        return raw_data.decode(encoding)
+
+    check_text_file()
+    return read_file()
 
 
 # todo: cache 对接 redis（当然，还需要遵循 如非必要，勿增实体 的原则）
