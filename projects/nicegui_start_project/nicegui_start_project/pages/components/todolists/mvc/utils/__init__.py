@@ -8,7 +8,7 @@ S = TypeVar("S", bound="Service")
 V = TypeVar("V", bound="View")
 
 
-def show_error_dialog(error_msg):
+def show_error(error_msg):
     dialog = ui.dialog().classes("w-96")
     with dialog, ui.card().classes("w-full p-6 rounded-lg shadow-lg"):
         ui.label("❌ 错误").classes("text-2xl font-bold text-red-600 mb-4")
@@ -36,8 +36,8 @@ class View(abc.ABC):
         """ 设置回调，Controller 设置给 View """
 
     @staticmethod
-    def show_error_dialog(error_msg):
-        return show_error_dialog(error_msg)
+    def show_error(error_msg):
+        return show_error(error_msg)
 
 
 class Controller(abc.ABC, Generic[S, V]):

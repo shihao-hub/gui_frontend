@@ -32,6 +32,8 @@ class TodoController(Controller[TodoListService, TodoListView]):
     - 无数据存储：Controller 不直接操作数据，所有数据操作都通过 Model 完成。
     - 轻量级：Controller 的代码通常比较简单，专注于流程控制。
     """
+    service: TodoListService
+    view: TodoListView
 
     def __init__(self):
         super().__init__(TodoListService(), TodoListView())
