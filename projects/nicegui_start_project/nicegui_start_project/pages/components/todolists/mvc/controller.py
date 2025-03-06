@@ -48,7 +48,7 @@ class TodoController(Controller[TodoListService, TodoListView]):
     async def _add_task(self):
         try:
             task = self.view.task_input.value
-            self.service1.add_todo(task)
+            self.service.add_todo(task)
             self.view.task_input.value = ""  # 清空输入框
             self._refresh_view()
         except Exception as e:
