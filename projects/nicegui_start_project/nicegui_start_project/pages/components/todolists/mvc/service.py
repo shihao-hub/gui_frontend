@@ -6,8 +6,8 @@ from typing import List, Dict, TypedDict
 
 from bson import ObjectId
 
+from nicegui_start_project.utils.mvc import Service
 from ..models import TodoListTypedDict, TodoList
-from .utils import Service
 
 
 class TodoListService(Service):

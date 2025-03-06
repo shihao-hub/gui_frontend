@@ -3,7 +3,7 @@ __all__ = [
 
     "cached", "simple_cache",
 
-    "read_html", "read_css", "read_js", "read_html_head", "read_html_body",
+    "read_html", "read_css", "read_js", "read_sql", "read_html_head", "read_html_body",
 
     "thread_pool",
 
@@ -13,30 +13,34 @@ __all__ = [
 
     "mvc",
 
+    "SingletonMeta",
     "catch_unhandled_exception", "get_random_port", "get_package_path",
 ]
 
 import functools
 import inspect
 import socket
+import threading
 import traceback
 from pathlib import Path
 from typing import Optional, Callable
 
-from loguru import logger
+from loguru import logger  # NOQA
 
 from . import async_utils, cache, file_utils, mvc, option, result, thread_utils
+from .mediator import SingletonMeta
 
-sync_to_async = async_utils.sync_to_async
+sync_to_async = async_utils.sync_to_async  # NOQA
 
 cached = cache.cached
 simple_cache = cache.simple_cache
 
+read_html_head = file_utils.read_html_head
+read_html_body = file_utils.read_html_body
 read_html = file_utils.read_html
 read_css = file_utils.read_css
 read_js = file_utils.read_js
-read_html_head = file_utils.read_html_head
-read_html_body = file_utils.read_html_body
+read_sql = file_utils.read_sql
 
 Maybe = option.Maybe
 Option = option.Option
@@ -83,6 +87,7 @@ def get_package_path(file: str):
 
 
 def catch_unhandled_exception(func):
+    """捕获出乎意料的异常的装饰器，该装饰器既可以修饰普通函数，又可以修饰 async 函数"""
     if inspect.iscoroutine(func):
         async def wrapper(*args, **kwargs):
             try:

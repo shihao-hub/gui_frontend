@@ -1,0 +1,36 @@
+from sqlalchemy import Column, Integer, String
+from sqlalchemy.orm import declarative_base
+
+from nicegui_start_project.settings import database_manager
+
+Base = declarative_base()
+
+
+class User(Base):
+    __tablename__ = 'todolists__users'
+    id = Column(Integer, primary_key=True)
+    name = Column(String(50))
+    age = Column(Integer)
+
+
+Base.metadata.create_all(database_manager.sqlalchemy_engine)
+
+if __name__ == '__main__':
+    # sqlalchemy 为什么我觉得这么难用？django 多方便。还是说 sqlalchemy 有自己的亮点？
+    session = database_manager.SqlAlchemySession()
+
+    # 插入数据
+    try:
+        session.add(User(name="Alice", age=30))
+        session.commit()
+    except:  # NOQA
+        session.rollback()
+        raise
+
+    # 查询数据
+    users = session.query(User).all()
+    for user in users:
+        print(f"ID: {user.id}, Name: {user.name}, Age: {user.age}")
+
+    # 关闭会话
+    session.close()

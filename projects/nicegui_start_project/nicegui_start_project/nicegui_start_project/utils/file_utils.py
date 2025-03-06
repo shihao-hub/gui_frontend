@@ -1,61 +1,102 @@
 __all__ = [
-    "read_html", "read_css", "read_js",
+    "read_html", "read_css", "read_js", "read_sql",
     "read_html_head", "read_html_body"
 ]
 
+import enum
+import functools
 import re
 from typing import Literal
 
 import chardet
 
+from .mediator import SingletonMeta
 
-def read_text_file(filename: str):
-    # check_text_file
-    # probe_file_coding
-    # read_file
-    def check_text_file():
-        extensions = {}
-
-    def read_file():
-        with open(filename, "rb") as f:
-            raw_data = f.read()
-        encoding = chardet.detect(raw_data).get("encoding")
-        assert encoding is not None
-        return raw_data.decode(encoding)
-
-    check_text_file()
-    return read_file()
+_CACHE_ENABLE = False  # todo: the config of enabling cache
 
 
-# todo: cache 对接 redis（当然，还需要遵循 如非必要，勿增实体 的原则）
-# note: 注释掉的话，html 就可以视为配置文件了，刷新而不需要重启就可以更新 html 内容！
-# @functools.cache
-def read_html(filename: str) -> str:
-    with open(filename, "r", encoding="utf-8") as f:
-        return f.read()
+class ReadFileModule(metaclass=SingletonMeta):
+    class _FileExtensionEnum(enum.Enum):
+        HTML = (enum.auto(), ".html")
+        CSS = (enum.auto(), ".css")
+        JS = (enum.auto(), ".js")
+        SQL = (enum.auto(), ".sql")
+
+        def __init__(self, auto, extension):
+            self.auto = auto
+            self.extension = extension
+
+    def _check_file_extension(self, filename: str, file_extension: _FileExtensionEnum):
+        this = self
+        if filename.endswith(file_extension.extension):
+            return
+        raise ValueError(f"{filename} is not {file_extension.extension} file")
+
+    def _read_text_file(self, filename: str):
+        this = self
+
+        # check_text_file
+        # probe_file_coding
+        # read_file
+
+        def check_text_file():
+            extensions = {}
+
+        def read_file():
+            with open(filename, "rb") as f:
+                raw_data = f.read()
+            encoding = chardet.detect(raw_data).get("encoding")
+            assert encoding is not None
+            return raw_data.decode(encoding)
+
+        check_text_file()
+        return read_file()
+
+    def _read_file(self, filename: str, mode: str = "r", encoding: str = "utf-8"):
+        this = self
+        with open(filename, mode, encoding=encoding) as f:
+            return f.read()
+
+    def read_html(self, filename: str) -> str:
+        self._check_file_extension(filename, self._FileExtensionEnum.HTML)
+        return self._read_file(filename)
+
+    def read_css(self, filename: str) -> str:
+        self._check_file_extension(filename, self._FileExtensionEnum.CSS)
+        return self._read_file(filename)
+
+    def read_js(self, filename: str) -> str:
+        self._check_file_extension(filename, self._FileExtensionEnum.JS)
+        return self._read_file(filename)
+
+    def read_sql(self, filename: str) -> str:
+        self._check_file_extension(filename, self._FileExtensionEnum.SQL)
+        return self._read_file(filename)
+
+    def _read_html_tag(self, filename: str, tag_name: Literal["head", "body"]) -> str:
+        this = self
+        content = read_html(filename)
+        pattern = re.compile(rf"<{tag_name}>(.*?)</{tag_name}>", re.DOTALL)
+        match = pattern.search(content)
+        assert match is not None
+        return match.group(1)
+
+    def read_html_head(self, filename: str) -> str:
+        return self._read_html_tag(filename, "head")
+
+    def read_html_body(self, filename: str) -> str:
+        return self._read_html_tag(filename, "body")
 
 
-def read_css(filename: str) -> str:
-    with open(filename, "r", encoding="utf-8") as f:
-        return f.read()
+read_html_head = ReadFileModule().read_html_head
+read_html_body = ReadFileModule().read_html_body
+read_html = ReadFileModule().read_html
+read_css = ReadFileModule().read_css
+read_js = ReadFileModule().read_js
+read_sql = ReadFileModule().read_sql
 
-
-def read_js(filename: str) -> str:
-    with open(filename, "r", encoding="utf-8") as f:
-        return f.read()
-
-
-def _read_html_tag(filename: str, tag_name: Literal["head", "body"]) -> str:
-    content = read_html(filename)
-    pattern = re.compile(rf"<{tag_name}>(.*?)</{tag_name}>", re.DOTALL)
-    match = pattern.search(content)
-    assert match is not None
-    return match.group(1)
-
-
-def read_html_head(filename: str) -> str:
-    return _read_html_tag(filename, "head")
-
-
-def read_html_body(filename: str) -> str:
-    return _read_html_tag(filename, "body")
+if _CACHE_ENABLE:
+    read_html = functools.cache(read_html)
+    read_css = functools.cache(read_css)
+    read_js = functools.cache(read_js)
+    read_sql = functools.cache(read_sql)

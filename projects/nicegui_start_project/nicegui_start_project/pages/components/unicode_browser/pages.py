@@ -8,7 +8,7 @@ from loguru import logger
 
 from nicegui import ui
 
-from nicegui_start_project.utils import read_js, thread_pool
+from nicegui_start_project.utils import read_js, thread_pool, SingletonMeta
 from . import configs
 from .configs import UNICODE_CATEGORIES
 
@@ -36,18 +36,11 @@ def thread_exception_handler(func):
 
 # todo: sqlalchemy
 
-class RefreshNameLabel:
-    _single_instance = None
+class RefreshNameLabel(metaclass=SingletonMeta):
 
     def __init__(self):
         # 提前保存元素引用（推荐）
         self._character_cards: List[ui.card] = []
-
-    @classmethod
-    def get_single_instance(cls):
-        if cls._single_instance is None:
-            cls._single_instance = cls()
-        return cls._single_instance
 
     @io_operation
     def youdao_translate(self, text: str) -> str:
@@ -99,7 +92,7 @@ def _create_category_cards(category):
                             with ui.column():
                                 ui.label(code).classes('text-xs font-mono text-gray-600')
                                 name_label = ui.label(name).classes('text-sm')
-                                RefreshNameLabel.get_single_instance().delay_refresh_name_label(name_label)
+                                RefreshNameLabel().delay_refresh_name_label(name_label)
 
 
 @ui.page(configs.PAGE_PATH, title=configs.PAGE_TITLE)
@@ -125,6 +118,6 @@ async def unicode_browser():
         # logger.info("triggering update_search event")
         # todo: 优化 read_js 的使用
         # todo: 推荐改成外部引用的方式，然后 fastapi 挂载静态资源，因为 run_javascript 类似 python eval，不好调试
-        await ui.run_javascript(read_js(f"{configs.CURRENT_DIR}/static/update_search.js"))
+        await ui.run_javascript(read_js(f"{configs.COMPONENT_SOURCE_DIR}/static/update_search.js"))
 
     search.on('update:model-value', update_search)

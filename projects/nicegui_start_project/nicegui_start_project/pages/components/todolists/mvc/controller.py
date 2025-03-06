@@ -7,9 +7,9 @@ from nicegui import ui
 from nicegui.events import TableSelectionEventArguments
 
 from nicegui_start_project.utils import catch_unhandled_exception
+from nicegui_start_project.utils.mvc import Controller, show_error
 from .service import TodoListService
 from .view import TodoListView
-from .utils import Controller, show_error
 
 
 class TodoController(Controller[TodoListService, TodoListView]):

@@ -6,9 +6,10 @@ from typing import Optional, List
 
 from nicegui import ui
 
+from nicegui_start_project.utils import read_sql
 from . import configs
 
-_connect = sqlite3.connect(f"{Path(__file__).resolve().parent}/diary_notebook.db")
+_connect = sqlite3.connect(f"{Path(__file__).resolve().parent}/database/test.db")
 cursor = _connect.cursor()
 
 
@@ -20,22 +21,7 @@ def connect():
 
 def iife_create_tables():
     with connect():
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS users (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                username TEXT NOT NULL,
-                password TEXT NOT NULL
-            );
-        """)
-
-        cursor.execute("""
-        CREATE TABLE IF NOT EXISTS diaries (
-            id INTEGER PRIMARY KEY,
-            user_id INTEGER,
-            title TEXT,
-            content TEXT
-        );
-        """)
+        cursor.executescript(read_sql(f"{configs.COMPONENT_SOURCE_DIR}/database/scripts/create_tables.sql"))
 
 
 iife_create_tables()

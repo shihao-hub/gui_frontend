@@ -5,9 +5,8 @@ from loguru import logger
 from nicegui import ui, app
 
 from nicegui_start_project.utils import Maybe, catch_unhandled_exception
-
+from nicegui_start_project.utils.mvc import View
 from ..models import TodoListTypedDict
-from .utils import View
 
 
 class TodoListView(View):

@@ -5,7 +5,7 @@ PAGE_TITLE = "Unicode 字符浏览器"
 PAGE_PATH = "/pages/components/unicode_browser"
 VERSION = "1.0.0"
 
-CURRENT_DIR = Path(__file__).parent
+COMPONENT_SOURCE_DIR = Path(__file__).resolve().parent
 
 # 预定义的 Unicode 类别范围（示例）
 UNICODE_CATEGORIES = {
