@@ -15,7 +15,7 @@ class _ThreadPool:
     #         cls._instance = super(ThreadPool, cls).__new__(cls)
     #     return cls._instance
 
-    def __init__(self, max_workers=3):
+    def __init__(self, max_workers=min(32, CPU核心数 + 4)):
         self._pool = futures.ThreadPoolExecutor(max_workers=max_workers)
 
     def get_pool(self) -> futures.ThreadPoolExecutor:
@@ -40,8 +40,8 @@ if __name__ == '__main__':
         logger.info(A())
         logger.info(id(A()))
         logger.info(A() is A())
-        logger.info(ThreadPool() is ThreadPool())
-        logger.info(f"{id(ThreadPool())}\t{id(ThreadPool())}")
-        assert id(ThreadPool()) == id(ThreadPool())  # 为什么始终成立？id 我记得是比较地址的呀... 《流畅的 Python》
-        assert ThreadPool() is ThreadPool()
+        logger.info(_ThreadPool() is _ThreadPool())
+        logger.info(f"{id(_ThreadPool())}\t{id(_ThreadPool())}")
+        assert id(_ThreadPool()) == id(_ThreadPool())  # 为什么始终成立？id 我记得是比较地址的呀... 《流畅的 Python》
+        assert _ThreadPool() is _ThreadPool()
         # get_random_port
