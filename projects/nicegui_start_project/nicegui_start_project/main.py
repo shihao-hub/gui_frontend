@@ -168,7 +168,7 @@ def main():
 
     with ui.column().classes('card-container'):
         for dirname in os.listdir(COMPONENTS_ROOT_DIR):
-            if not os.path.isdir(f"{COMPONENTS_ROOT_DIR}/{dirname}") or dirname.startswith("_"):
+            if dirname.startswith("_") or not os.path.isdir(f"{COMPONENTS_ROOT_DIR}/{dirname}"):
                 continue
             # 体现了约定大于配置？
             try:
