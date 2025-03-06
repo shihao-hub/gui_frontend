@@ -8,25 +8,71 @@ from loguru import logger
 
 from nicegui import ui
 
-from nicegui_start_project.utils import read_js,thread_pool
+from nicegui_start_project.utils import read_js, thread_pool
 from . import configs
 from .configs import UNICODE_CATEGORIES
 
 
-async def youdao_translate(text: str, from_lang: str = "auto", to_lang: Literal["zh-CHS"] = "zh-CHS") -> str:
-    """有道翻译"""
+def io_operation(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        return func(*args, **kwargs)
 
-    def _get_chinese() -> str:
-        pass
-
-    try:
-        return _get_chinese()
-    except Exception as e:
-        logger.error(f"{e}\n{traceback.format_exc()}")
-        return text
+    return wrapper
 
 
+def thread_exception_handler(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        try:
+            # todo: recording information
+            return func(*args, **kwargs)
+        except Exception as e:
+            print(f"函数 {func.__name__} 执行失败: {e}")
+            raise
 
+    return wrapper
+
+
+# todo: sqlalchemy
+
+class RefreshNameLabel:
+    _single_instance = None
+
+    def __init__(self):
+        # 提前保存元素引用（推荐）
+        self._character_cards: List[ui.card] = []
+
+    @classmethod
+    def get_single_instance(cls):
+        if cls._single_instance is None:
+            cls._single_instance = cls()
+        return cls._single_instance
+
+    @io_operation
+    def youdao_translate(self, text: str) -> str:
+        """有道翻译接口调用"""
+
+        def _get_chinese() -> str:
+            return "youdao_" + text
+
+        try:
+            return _get_chinese()
+        except Exception as e:
+            logger.error(f"{e}\n{traceback.format_exc()}")
+            return text
+
+    def _get_character_cards(self) -> List[ui.card]:
+        return self._character_cards
+
+    def delay_refresh_name_label(self, name_label: ui.label):
+        @thread_exception_handler
+        def update_name_label(label: ui.label):
+            label.text = self.youdao_translate(label.text)
+            label.update()
+
+        # todo: 注册到 body 的回调中
+        thread_pool.submit(update_name_label, name_label)
 
 
 def _get_unicode_chars(start, end) -> List[Tuple[str, str, str]]:
@@ -36,14 +82,6 @@ def _get_unicode_chars(start, end) -> List[Tuple[str, str, str]]:
         for code in range(start, end + 1)
         if unicodedata.category(chr(code)) not in ['Cc', 'Cn']
     ]
-
-
-# 提前保存元素引用（推荐）
-_character_cards: List[ui.card] = []
-
-
-def _get_character_cards() -> List[ui.card]:
-    return _character_cards
 
 
 def _create_category_cards(category):
@@ -60,7 +98,8 @@ def _create_category_cards(category):
                             ui.label(char).classes('text-4xl w-20')
                             with ui.column():
                                 ui.label(code).classes('text-xs font-mono text-gray-600')
-                                ui.label(name).classes('text-sm')
+                                name_label = ui.label(name).classes('text-sm')
+                                RefreshNameLabel.get_single_instance().delay_refresh_name_label(name_label)
 
 
 @ui.page(configs.PAGE_PATH, title=configs.PAGE_TITLE)
