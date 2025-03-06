@@ -1,5 +1,6 @@
 __all__ = ["thread_pool"]
 
+import os
 from concurrent import futures
 
 from loguru import logger
@@ -15,7 +16,7 @@ class _ThreadPool:
     #         cls._instance = super(ThreadPool, cls).__new__(cls)
     #     return cls._instance
 
-    def __init__(self, max_workers=min(32, CPU核心数 + 4)):
+    def __init__(self, max_workers=min(32, os.cpu_count() + 4)):
         self._pool = futures.ThreadPoolExecutor(max_workers=max_workers)
 
     def get_pool(self) -> futures.ThreadPoolExecutor:
