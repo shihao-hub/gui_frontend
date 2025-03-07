@@ -3,6 +3,7 @@ from sqlalchemy.orm import declarative_base
 
 from nicegui_start_project.settings import database_manager
 
+# sqlalchemy 为什么我觉得这么难用？django 多方便。还是说 sqlalchemy 有自己的亮点？
 Base = declarative_base()
 
 
@@ -16,7 +17,6 @@ class User(Base):
 Base.metadata.create_all(database_manager.sqlalchemy_engine)
 
 if __name__ == '__main__':
-    # sqlalchemy 为什么我觉得这么难用？django 多方便。还是说 sqlalchemy 有自己的亮点？
     session = database_manager.SqlAlchemySession()
 
     # 插入数据

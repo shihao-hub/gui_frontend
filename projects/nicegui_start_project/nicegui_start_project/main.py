@@ -144,7 +144,7 @@ def _add_css():
         margin: 0;
     }
 
-    /* 响应式优化 */
+    /* 响应式优化：鼠标放上去有浮动效果 */
     @media (max-width: 640px) {
         .card-container {
             grid-template-columns: 1fr;
