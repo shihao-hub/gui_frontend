@@ -2,11 +2,14 @@ __all__ = ["thread_pool", "SingletonMeta"]
 
 import threading
 
-from .thread_utils import thread_pool
+
+def thread_pool():
+    from .thread_utils import thread_pool as thread_pool_alias
+    return thread_pool_alias
 
 
 class SingletonMeta(type):
-    _instances = {}
+    _instances = {}  # fixme: 这个得弱引用吧？即若某个对象只被 _instances 持有，垃圾回收器会回收它
     _lock = threading.Lock()
 
     def __call__(cls, *args, **kwargs):
