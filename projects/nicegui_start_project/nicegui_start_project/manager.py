@@ -6,6 +6,15 @@
 1. 启动项目命令：python manager.py startup
 2. 创建模板命令：python manager.py create_component_template --name xx --filename xx
 
+
+### Code Notes
+1. ```python
+    # 添加 create_component_template_file 子命令及参数
+    create_parser = subparsers.add_parser("create_component_template_file", help="创建组件模板文件")
+    create_parser.add_argument("--name", type=str, required=True, help="组件名")
+    create_parser.add_argument("--filename", type=str, required=True,
+                               choices=list(TEMPLATES.keys()), help="指定创建的文件名")
+   ```
 """
 import abc
 import argparse
@@ -113,7 +122,7 @@ def _create_component_template_file(name: str, filename: str):
         f.write(template.format(**asdict(input_data)))
 
 
-def handle_create_component_template_dir(name: str):
+def handle_create_component_template(name: str):
     # subflow A
     # 判断组件是否存在
     #   如果存在则退出
@@ -145,18 +154,11 @@ def main():
     parser = argparse.ArgumentParser(description="项目管理实用程序")
     subparsers = parser.add_subparsers(dest="command", help="可用命令")
 
-    # 添加 startup 子命令
-    startup_parser = subparsers.add_parser("startup", help="启动项目")
+    subparsers.add_parser("startup", help="启动项目")
+    # subparsers.add_parser("sqlalchemy_create_all", help="sqlalchemy.create_all")
 
-    # 添加 create_component_template_dir 子命令及参数
-    create_parser = subparsers.add_parser("create_component_template_dir", help="创建组件模板")
-    create_parser.add_argument("--name", type=str, required=True, help="组件名")
-
-    # 添加 create_component_template_file 子命令及参数
-    # create_parser = subparsers.add_parser("create_component_template_file", help="创建组件模板文件")
-    # create_parser.add_argument("--name", type=str, required=True, help="组件名")
-    # create_parser.add_argument("--filename", type=str, required=True,
-    #                            choices=list(TEMPLATES.keys()), help="指定创建的文件名")
+    create_component_template_parser = subparsers.add_parser("create_component_template", help="创建组件模板")
+    create_component_template_parser.add_argument("--name", type=str, required=True, help="组件名")
 
     # 解析参数
     args = parser.parse_args()
@@ -164,8 +166,8 @@ def main():
     # 根据命令分发逻辑
     if args.command == "startup":
         handle_startup()
-    elif args.command == "create_component_template_dir":
-        handle_create_component_template_dir(args.name)
+    elif args.command == "create_component_template":
+        handle_create_component_template(args.name)
     else:
         parser.print_help()
 
