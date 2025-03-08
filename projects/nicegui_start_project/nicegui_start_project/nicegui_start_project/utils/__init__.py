@@ -27,6 +27,7 @@ from typing import Optional, Callable
 
 from loguru import logger  # NOQA
 
+from nicegui_start_project.settings import database_manager
 from . import async_utils, cache, file_utils, mvc, option, result, thread_utils
 from .mediator import SingletonMeta
 
@@ -102,6 +103,15 @@ def catch_unhandled_exception(func):
             except Exception as e:
                 logger.error(f"{e}\n{traceback.format_exc()}")
     return wrapper
+
+
+def persistent_func_cache_data(table_name: str):
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            res = func(*args, **kwargs)
+            return res
+        return wrapper
+    return decorator
 
 
 if __name__ == '__main__':
