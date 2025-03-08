@@ -4,7 +4,8 @@ from sqlalchemy.orm import declarative_base
 from nicegui_start_project.settings import database_manager
 
 # sqlalchemy 为什么我觉得这么难用？django 多方便。还是说 sqlalchemy 有自己的亮点？
-Base = declarative_base()
+
+Base = database_manager.sqlalchemy.Base
 
 
 class User(Base):
@@ -14,10 +15,10 @@ class User(Base):
     age = Column(Integer)
 
 
-Base.metadata.create_all(database_manager.sqlalchemy_engine)
+database_manager.sqlalchemy.create_all()
 
 if __name__ == '__main__':
-    session = database_manager.SqlAlchemySession()
+    session = database_manager.sqlalchemy.Session()
 
     # 插入数据
     try:
@@ -32,5 +33,4 @@ if __name__ == '__main__':
     for user in users:
         print(f"ID: {user.id}, Name: {user.name}, Age: {user.age}")
 
-    # 关闭会话
     session.close()
