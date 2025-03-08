@@ -1,71 +1,14 @@
-import functools
-import traceback
-from typing import Dict, List, Tuple, Literal
-
 import unicodedata
+from typing import List, Tuple
 
 from loguru import logger
 
 from nicegui import ui
 
-from nicegui_start_project.utils import read_js, thread_pool, SingletonMeta
+from nicegui_start_project.utils import read_js
 from . import configs
 from .configs import UNICODE_CATEGORIES
-
-
-def io_operation(func):
-    @functools.wraps(func)
-    def wrapper(*args, **kwargs):
-        return func(*args, **kwargs)
-
-    return wrapper
-
-
-def thread_exception_handler(func):
-    @functools.wraps(func)
-    def wrapper(*args, **kwargs):
-        try:
-            # todo: recording information
-            return func(*args, **kwargs)
-        except Exception as e:
-            print(f"函数 {func.__name__} 执行失败: {e}")
-            raise
-
-    return wrapper
-
-
-# todo: sqlalchemy
-
-class RefreshNameLabel(metaclass=SingletonMeta):
-
-    def __init__(self):
-        # 提前保存元素引用（推荐）
-        self._character_cards: List[ui.card] = []
-
-    @io_operation
-    def youdao_translate(self, text: str) -> str:
-        """有道翻译接口调用"""
-
-        def _get_chinese() -> str:
-            return "youdao_" + text
-
-        try:
-            return _get_chinese()
-        except Exception as e:
-            logger.error(f"{e}\n{traceback.format_exc()}")
-            return text
-
-    def _get_character_cards(self) -> List[ui.card]:
-        return self._character_cards
-
-    def delay_refresh_name_label(self, name_label: ui.label):
-        @thread_exception_handler
-        def update_name_label(label: ui.label):
-            label.text = self.youdao_translate(label.text)
-            label.update()
-
-        # todo: 注册到 body 的回调中
-        thread_pool.submit(update_name_label, name_label)
+from .modules import RefreshNameLabelModule
 
 
 def _get_unicode_chars(start, end) -> List[Tuple[str, str, str]]:
@@ -92,7 +35,7 @@ def _create_category_cards(category):
                             with ui.column():
                                 ui.label(code).classes('text-xs font-mono text-gray-600')
                                 name_label = ui.label(name).classes('text-sm')
-                                RefreshNameLabel().delay_refresh_name_label(name_label)
+                                RefreshNameLabelModule().register_name_labels(name_label, name)
 
 
 @ui.page(configs.PAGE_PATH, title=configs.PAGE_TITLE)
@@ -121,3 +64,6 @@ async def unicode_browser():
         await ui.run_javascript(read_js(f"{configs.COMPONENT_SOURCE_DIR}/static/update_search.js"))
 
     search.on('update:model-value', update_search)
+
+    # page ready?
+    RefreshNameLabelModule().delay_refresh_name_labels()
