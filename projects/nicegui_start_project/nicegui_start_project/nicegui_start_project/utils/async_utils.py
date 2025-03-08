@@ -10,4 +10,4 @@ async def sync_to_async(func, *args, **kwargs):
         return func(*args, **kwargs)
 
     loop = asyncio.get_event_loop()
-    return await loop.run_in_executor(thread_pool.get_pool(), sync_code)
+    return await loop.run_in_executor(thread_pool().get_pool(), sync_code)
