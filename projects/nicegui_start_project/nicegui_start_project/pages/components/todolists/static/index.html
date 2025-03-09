@@ -145,16 +145,33 @@
                 width: 100%;
             }
         }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 1rem;
+        }
+
+        .pagination .btn {
+            padding: 8px 16px;
+        }
+
+        #pageInfo {
+            margin: 0 10px;
+            color: #2c3e50;
+        }
     </style>
 </head>
 
 <body>
 <div class="container">
     <!--
-                待办事项清单
-                添加的输入框 + 添加按钮 构成的 form
-                展示待办事项的 div
-    -->
+            待办事项清单
+            添加的输入框 + 添加按钮 构成的 form
+            展示待办事项的 div
+-->
     <h1 id="h1_id">待办事项清单</h1>
 
     <form id="addForm">
@@ -163,11 +180,20 @@
     </form>
 
     <div class="todo-container" id="todoList"></div>
+
+    <!-- 分页控件 -->
+    <div class="pagination">
+        <button id="prevPage" class="btn">上一页</button>
+        <span id="pageInfo">第 <span id="currentPageDisplay">1</span> 页 / 共 <span id="totalPages">1</span> 页</span>
+        <button id="nextPage" class="btn">下一页</button>
+    </div>
 </div>
 
 <script>
     const API_BASE_URL = 'http://localhost:12000/pages/components/todolists';
     let todos = [];
+    let currentPage = 0;
+    const itemsPerPage = 10;
 
     // 获取所有待办事项
     async function fetchTodos() {
@@ -190,24 +216,53 @@
 
         if (todos.length === 0) {
             todoList.innerHTML = '<div class="empty-state">暂无待办事项</div>';
+            updatePaginationControls();
             return;
         }
 
-        todos.forEach((todo, index) => {
-            // console.log(todo, index); // content, index
+        const start = currentPage * itemsPerPage;
+        const end = start + itemsPerPage;
+
+        for (let i = start; i < end && i < todos.length; i++) {
+            const todo = todos[i];
             const div = document.createElement('div');
             div.className = 'todo-item';
-            // 此处是 span class 控制，有 completed class 的 span 有不一样的样式
             div.innerHTML = `
-                    <span class="todo-text ${todo.completed ? 'completed' : ''}" onclick="toggleTodo(${index})">${todo}</span>
-                    <div class="todo-actions">
-                        <button class="btn btn-edit" onclick="editTodo(${index})">编辑</button>
-                        <button class="btn btn-delete" onclick="deleteTodo(${index})">删除</button>
-                    </div>
-                `;
+                <span class="todo-text ${todo.completed ? 'completed' : ''}" onclick="toggleTodo(${i})">${todo}</span>
+                <div class="todo-actions">
+                    <button class="btn btn-edit" onclick="editTodo(${i})">编辑</button>
+                    <button class="btn btn-delete" onclick="deleteTodo(${i})">删除</button>
+                </div>
+            `;
             todoList.appendChild(div);
-        });
+        }
+
+        updatePaginationControls();
     }
+
+    function updatePaginationControls() {
+        const totalPages = Math.ceil(todos.length / itemsPerPage) || 1;
+        document.getElementById('currentPageDisplay').textContent = currentPage + 1;
+        document.getElementById('totalPages').textContent = totalPages;
+        document.getElementById('prevPage').disabled = currentPage === 0;
+        document.getElementById('nextPage').disabled = currentPage >= totalPages - 1;
+    }
+
+    // 事件监听器
+    document.getElementById('prevPage').addEventListener('click', () => {
+        if (currentPage > 0) {
+            currentPage--;
+            renderTodos();
+        }
+    });
+
+    document.getElementById('nextPage').addEventListener('click', () => {
+        const totalPages = Math.ceil(todos.length / itemsPerPage);
+        if (currentPage < totalPages - 1) {
+            currentPage++;
+            renderTodos();
+        }
+    });
 
     // 添加待办事项
     document.getElementById('addForm').addEventListener('submit', async (e) => {
