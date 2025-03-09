@@ -1,0 +1,1 @@
+> "所有数据库映射类使用 Model/Entity 后缀，API 校验模型使用 Schema 后缀，跨服务传输对象使用 DTO 后缀"

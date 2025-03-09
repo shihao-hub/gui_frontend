@@ -13,23 +13,26 @@ __all__ = [
 
     "mvc",
 
-    "SingletonMeta",
+    "SingletonMeta", "APIService",
     "catch_unhandled_exception", "get_random_port", "get_package_path",
+    "get_mongonengine_meta",
 ]
 
 import functools
 import inspect
 import socket
-import threading
 import traceback
+from typing import Generic, TypeVar, List, Type
 from pathlib import Path
-from typing import Optional, Callable
+from typing import Optional
 
 from loguru import logger  # NOQA
 
-from nicegui_start_project.settings import database_manager
+from nicegui_start_project.settings import database_manager, DATABASE_ALIAS
 from . import async_utils, cache, file_utils, mvc, option, result, thread_utils
 from .mediator import SingletonMeta
+
+T = TypeVar("T")
 
 sync_to_async = async_utils.sync_to_async  # NOQA
 
@@ -110,8 +113,46 @@ def persistent_func_cache_data(table_name: str):
         def wrapper(*args, **kwargs):
             res = func(*args, **kwargs)
             return res
+
         return wrapper
+
     return decorator
+
+
+def get_mongonengine_meta(collection: str):
+    return dict(collection=collection, db_alias=DATABASE_ALIAS)
+
+
+class APIService(Generic[T]):
+    """参考 django APIView"""
+
+    def __init__(self, document_class: Type[T]):
+        self._document_class = document_class
+
+    def create(self, **kwargs) -> T:
+        this = self
+        doc = self._document_class(**kwargs)
+        doc.save()
+        return doc
+
+    def delete(self, doc: T) -> bool:
+        this = self
+        return doc.delete()
+
+    def update(self, doc: T, **kwargs) -> T:
+        this = self
+        for k, v in kwargs.items():
+            setattr(doc, k, v)
+        doc.save()
+        return doc
+
+    def get(self, doc_id: str) -> T:
+        this = self
+        return self._document_class.objects.get(id=doc_id)
+
+    def lists(self) -> List[T]:
+        this = self
+        return self._document_class.objects.all()
 
 
 if __name__ == '__main__':

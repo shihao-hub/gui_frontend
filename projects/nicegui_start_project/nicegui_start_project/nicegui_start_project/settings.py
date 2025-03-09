@@ -34,7 +34,7 @@ COMPONENTS_ROOT_DIR = f"{SOURCE_DIR}/pages/components"
 COMPONENTS_PACKAGE_NAME = "pages.components"
 
 
-class _DatabaseManager:
+class _DatabaseConfig:
     """优化成懒加载"""
 
     # ========================================
@@ -109,4 +109,5 @@ class _DatabaseManager:
         return self._redis_db
 
 
-database_manager = _DatabaseManager()
+database_config = _DatabaseConfig()
+database_manager = database_config

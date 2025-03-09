@@ -5,11 +5,13 @@ from nicegui import app
 from fastapi import Form, HTTPException, status
 from fastapi.requests import Request
 
-from nicegui_start_project.settings import redis_db as db
+from nicegui_start_project.settings import database_manager
 from .. import configs
 
 TODO_LIST_KEY = "api:redis:todo_list"
 BASE_URL = f"{configs.PAGE_PATH}/api/redis/todolists"
+
+db = database_manager.redis_db
 
 
 def _check_index(index: int, list_len: int = None):
@@ -62,9 +64,25 @@ def _remove_element_by_index(index: int):
     return db.eval(lua_script, 1, TODO_LIST_KEY, index)
 
 
+# todo: 为了避免多进程 runserver 影响，直接操作 redis 来存放全局标记？
+_loaded_data = False
+
+
+def load_data():
+    global _loaded_data
+    if not _loaded_data:
+        _loaded_data = True
+        # todos: List[bytes] = db.lrange(TODO_LIST_KEY, 0, -1)
+        # for todo in todos:
+        #     db.rpush(TODO_LIST_KEY, todo)
+
+
 @app.get(f"{BASE_URL}")
 def list_todo():
+    load_data()
+
     todos: List[bytes] = db.lrange(TODO_LIST_KEY, 0, -1)
+
     # 注意，返回的 todos 是 bytes 列表，需要转为 str 才能被 JSON 序列化
     return {"data": [re.sub(r"^.*\\|", "", e.decode("utf-8"), 1) for e in todos]}
 
@@ -93,6 +111,8 @@ def update_todo(request: Request, index: int, content: str = Form(...)):
 
 @app.get(f"{BASE_URL}" + "/{index}")
 def get_todo(request: Request, index: int):
+    load_data()
+
     _check_index(index)
     data = db.lrange(TODO_LIST_KEY, index, index)
     return {"data": data[0].decode("utf-8")}

@@ -175,9 +175,11 @@ def main():
                 # import code
                 importlib.import_module(f"{COMPONENTS_PACKAGE_NAME}.{dirname}.pages")
                 try:
+                    # routers 默认导入。推荐优化一下，将整个目录除了 __init__.py 都初始化导入一下。
                     importlib.import_module(f"{COMPONENTS_PACKAGE_NAME}.{dirname}.routers")
-                except ImportError:
-                    pass
+                except ImportError as import_error:
+                    if not str(import_error).strip().startswith("No module named"):
+                        logger.error(import_error)  # 信息需要打印出来的，否则出问题了也不知道
 
                 module = importlib.import_module(f"{COMPONENTS_PACKAGE_NAME}.{dirname}.configs")
                 page_title = getattr(module, "PAGE_TITLE", None)

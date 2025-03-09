@@ -9,7 +9,7 @@ from . import configs
 from .mvc import TodoListService, TodoListView, TodoController
 
 
-# @app.get(configs.PAGE_PATH, response_class=HTMLResponse, tags=["todolists"])
+@app.get(configs.PAGE_PATH, response_class=HTMLResponse, tags=["todolists"])
 async def todolists():
     """
     实现说明：
@@ -30,7 +30,7 @@ async def todolists():
     return read_html(configs.HTML_PATH)
 
 
-@ui.page(configs.PAGE_PATH, title=configs.PAGE_TITLE)
+@ui.page(configs.PAGE_PATH + ":beta", title=configs.PAGE_TITLE)
 async def todolists():
     # 2025-03-01：
     #   此处属于 MVC 练手，虽然不是那么好，而且我感觉还浪费了时间，但是学习其实应该都是这样的吧？
