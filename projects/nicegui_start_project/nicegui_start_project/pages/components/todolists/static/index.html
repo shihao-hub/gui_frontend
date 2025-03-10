@@ -163,6 +163,130 @@
             color: #2c3e50;
         }
     </style>
+
+    <style>
+        /* 分页容器 */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            margin-top: 2rem;
+            padding: 12px 0;
+            border-radius: 8px;
+            background: #f8f9fa;
+        }
+
+        /* 分页按钮基础样式 */
+        .pagination .btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            border: 1px solid #e0e0e0;
+            background: white;
+            color: #3498db;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        /* 悬停效果 */
+        .pagination .btn:not(:disabled):hover {
+            background: #3498db;
+            color: white;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(52, 152, 219, 0.2);
+        }
+
+        /* 禁用状态 */
+        .pagination .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            background: #f8f9fa;
+            color: #95a5a6;
+            border-color: #e0e0e0;
+        }
+
+        /* 页码信息 */
+        #pageInfo {
+            font-size: 14px;
+            color: #7f8c8d;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        #pageInfo span {
+            font-weight: 600;
+            color: #2c3e50;
+            padding: 4px 12px;
+            background: white;
+            border-radius: 20px;
+            border: 1px solid #e0e0e0;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        /* 移动端适配 */
+        @media (max-width: 480px) {
+            .pagination {
+                gap: 8px;
+                flex-wrap: wrap;
+            }
+
+            .pagination .btn {
+                padding: 6px 12px;
+                font-size: 14px;
+            }
+
+            #pageInfo {
+                font-size: 13px;
+            }
+
+            #pageInfo span {
+                padding: 2px 8px;
+            }
+        }
+    </style>
+
+    <style>
+        /* 添加/修改的样式 */
+        .todo-container {
+            height: 400px; /* 固定高度 */
+            overflow-y: auto; /* 添加滚动条 */
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background: #fff;
+            margin-bottom: 1rem;
+        }
+
+        /* 确保每个条目高度一致 */
+        .todo-item {
+            min-height: 60px; /* 最小高度 */
+            padding: 1rem;
+            display: flex;
+            align-items: center; /* 垂直居中 */
+        }
+
+        /* 占位符样式 */
+        .todo-placeholder {
+            visibility: hidden;
+            height: 0;
+            padding: 0;
+            margin: 0;
+            border: none;
+        }
+
+        /* 响应式调整 */
+        @media (max-width: 600px) {
+            .todo-container {
+                height: 300px;
+            }
+
+            .todo-item {
+                min-height: 50px;
+                padding: 0.8rem;
+            }
+        }
+    </style>
 </head>
 
 <body>
@@ -183,9 +307,12 @@
 
     <!-- 分页控件 -->
     <div class="pagination">
-        <button id="prevPage" class="btn">上一页</button>
-        <span id="pageInfo">第 <span id="currentPageDisplay">1</span> 页 / 共 <span id="totalPages">1</span> 页</span>
-        <button id="nextPage" class="btn">下一页</button>
+        <button id="prevPage" class="btn" aria-label="上一页">‹ 上一页</button>
+        <span id="pageInfo">
+        第 <span id="currentPageDisplay">1</span> 页
+        共 <span id="totalPages">1</span> 页
+    </span>
+        <button id="nextPage" class="btn" aria-label="下一页">下一页 ›</button>
     </div>
 </div>
 
@@ -193,7 +320,7 @@
     const API_BASE_URL = 'http://localhost:12000/pages/components/todolists';
     let todos = [];
     let currentPage = 0;
-    const itemsPerPage = 10;
+    const itemsPerPage = 5;
 
     // 获取所有待办事项
     async function fetchTodos() {
@@ -235,6 +362,14 @@
                 </div>
             `;
             todoList.appendChild(div);
+        }
+
+        // 填充占位符保持高度一致
+        const remaining = itemsPerPage - (todos.length - start);
+        for (let i = 0; i < remaining && i < itemsPerPage; i++) {
+            const placeholder = document.createElement('div');
+            placeholder.className = 'todo-item todo-placeholder';
+            todoList.appendChild(placeholder);
         }
 
         updatePaginationControls();

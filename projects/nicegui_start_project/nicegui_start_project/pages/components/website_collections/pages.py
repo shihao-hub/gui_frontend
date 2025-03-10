@@ -1,10 +1,17 @@
+import importlib
+
+from loguru import logger
 from nicegui import ui
 
+from nicegui_start_project.utils import get_package_path
 from . import configs
 
 
 @ui.page(configs.PAGE_PATH, title=configs.PAGE_TITLE)
 async def website_collections():
+    # 不推荐生产环境中使用。reload 主要用于开发调试，生产环境中应避免动态重载，可能引发不可预测的问题。
+    if configs.HOT_REFRESH:
+        importlib.reload(configs)
     for website in configs.WEBSITES:
         with ui.card().style("width: 300px; margin: 10px; padding: 10px; border-radius: 10px;"):
             with ui.row():

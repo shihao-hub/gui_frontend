@@ -82,12 +82,29 @@ def get_random_port(port: Optional[int] = None) -> int:
         return s.getsockname()[1]
 
 
+class _PackagePath:
+    def __init__(self, package_path: str):
+        self.package_path = package_path
+        assert self.package_path.count(".") >= 2
+        self.package_path_parent = self.package_path[:self.package_path.rfind(".")]
+
+    def __str__(self):
+        return self.package_path
+
+
 def get_package_path(file: str):
+    """
+    Usage:
+        {source}/pages/components/sample/pages.py
+        get_package_path(__file__) -> pages.components.sample.pages
+    """
     relative_path = str(Path(file).resolve().relative_to(Path.cwd()))
     extension = Path(file).suffix
     relative_path = relative_path.replace("\\", ".")
     relative_path = relative_path.replace("/", ".")
-    return relative_path[: -len(extension)]
+    res = relative_path[: -len(extension)]
+    assert res.startswith("pages.components")
+    return _PackagePath(res)
 
 
 def catch_unhandled_exception(func):
