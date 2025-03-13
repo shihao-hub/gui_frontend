@@ -1,6 +1,3 @@
-"""
-数据校验
-"""
 import pprint
 import re
 from typing import Annotated
