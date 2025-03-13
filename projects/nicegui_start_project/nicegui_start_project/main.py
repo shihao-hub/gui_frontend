@@ -1,12 +1,14 @@
 import atexit
+import dataclasses
 import importlib
+import json
 import logging
 import os
 import pprint
 import subprocess
 import sys
 import traceback
-from typing import List, Callable, Dict
+from typing import List, Callable, Dict, Tuple, Union
 
 import mongoengine as engine
 from fastapi.routing import APIRoute
@@ -16,7 +18,7 @@ from nicegui import ui, app
 
 from nicegui_start_project.settings import (
     HOST, PORT, BASE_URL,
-    DATABASE, DATABASE_ALIAS,
+    DATABASE, DATABASE_ALIAS, BASE_DIR,
     NFS_SERVICE_STARTUP_ENTRY_PATH,
     COMPONENTS_ROOT_DIR,
     COMPONENTS_PACKAGE_NAME,
@@ -155,6 +157,31 @@ def _add_css():
     ui.add_head_html(f""" <style>{css}</style> """)
 
 
+@dataclasses.dataclass
+class RouteRecord:
+    path: str
+    methods: set
+
+
+def _write_routes_to_file(routes: List[Tuple[str, set]]):
+    data = []
+    for route in routes:
+        route = RouteRecord(path=route[0], methods=route[1])
+        if route.path.count("/") == 3 and "GET" in route.methods:
+            data.append(route.path)
+
+    def write_to_resources(filename: str, mode: str, content: Union[bytes, str]):
+        root_dir = f"{BASE_DIR}/resources"
+        os.makedirs(root_dir, exist_ok=True)
+        filepath = f"{root_dir}/{filename}"
+
+        # todo: rb -> bytes, w/r -> str
+        with open(filepath, mode) as f:
+            f.write(content)
+
+    write_to_resources("routes.json", "w", json.dumps(data))
+
+
 def main():
     start_services()
 
@@ -204,7 +231,9 @@ def main():
                     logger.warning(f"Module '{dirname}' does not have 'PAGE_TITLE' or 'PAGE_PATH' defined.")
             except Exception as e:
                 logger.error(f"Error importing module {dirname}: {e}\n{traceback.format_exc()}")
-    logger.info(pprint.pformat([f"{e.path} - {e.methods}" for e in app.routes if isinstance(e, APIRoute)]))
+    routes = [(e.path, e.methods) for e in app.routes if isinstance(e, APIRoute)]
+    logger.info(pprint.pformat([f"{e[0]} - {e[1]}" for e in routes]))
+    _write_routes_to_file(routes)
     ui.run(host=HOST, port=PORT, reload=False, show=False, favicon="🚀")
 
 
