@@ -3,9 +3,11 @@ __all__ = [
     "read_html_head", "read_html_body"
 ]
 
+import dataclasses
 import enum
 import functools
 import re
+from dataclasses import dataclass
 from typing import Literal
 
 import chardet
@@ -15,7 +17,22 @@ from .mediator import SingletonMeta
 _CACHE_ENABLE = False  # todo: the config of enabling cache
 
 
-class ReadFileModule(metaclass=SingletonMeta):
+@dataclass
+class Row:
+    pass
+
+
+@dataclass
+class EnglishRow(Row):
+    word: str
+    translation: str
+
+
+class ExcelReader:
+    pass
+
+
+class ReadFileSingleton(metaclass=SingletonMeta()):
     class _FileExtensionEnum(enum.Enum):
         HTML = (enum.auto(), ".html")
         CSS = (enum.auto(), ".css")
@@ -88,12 +105,12 @@ class ReadFileModule(metaclass=SingletonMeta):
         return self._read_html_tag(filename, "body")
 
 
-read_html_head = ReadFileModule().read_html_head
-read_html_body = ReadFileModule().read_html_body
-read_html = ReadFileModule().read_html
-read_css = ReadFileModule().read_css
-read_js = ReadFileModule().read_js
-read_sql = ReadFileModule().read_sql
+read_html_head = ReadFileSingleton().read_html_head
+read_html_body = ReadFileSingleton().read_html_body
+read_html = ReadFileSingleton().read_html
+read_css = ReadFileSingleton().read_css
+read_js = ReadFileSingleton().read_js
+read_sql = ReadFileSingleton().read_sql
 
 if _CACHE_ENABLE:
     read_html = functools.cache(read_html)
