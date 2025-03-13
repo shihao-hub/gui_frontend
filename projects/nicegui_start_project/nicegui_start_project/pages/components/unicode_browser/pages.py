@@ -8,7 +8,7 @@ from nicegui import ui
 from nicegui_start_project.utils import read_js
 from . import configs
 from .configs import UNICODE_CATEGORIES
-from .modules import RefreshNameLabelModule
+from .singletons import RefreshNameLabelSingleton
 
 
 def _get_unicode_chars(start, end) -> List[Tuple[str, str, str]]:
@@ -35,7 +35,7 @@ def _create_category_cards(category):
                             with ui.column():
                                 ui.label(code).classes('text-xs font-mono text-gray-600')
                                 name_label = ui.label(name).classes('text-sm')
-                                RefreshNameLabelModule().register_name_labels(name_label, name)
+                                RefreshNameLabelSingleton().register_name_labels(name_label, name)
 
 
 @ui.page(configs.PAGE_PATH, title=configs.PAGE_TITLE)
@@ -66,4 +66,4 @@ async def unicode_browser():
     search.on('update:model-value', update_search)
 
     # page ready?
-    RefreshNameLabelModule().delay_refresh_name_labels()
+    RefreshNameLabelSingleton().delay_refresh_name_labels()
