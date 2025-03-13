@@ -22,6 +22,7 @@ import functools
 import inspect
 import socket
 import traceback
+from abc import ABC, abstractmethod
 from typing import Generic, TypeVar, List, Type
 from pathlib import Path
 from typing import Optional
@@ -30,7 +31,7 @@ from loguru import logger  # NOQA
 
 from nicegui_start_project.settings import database_manager, DATABASE_ALIAS
 from . import async_utils, cache, file_utils, mvc, option, result, thread_utils
-from .mediator import SingletonMeta
+from .singleton import SingletonMeta
 
 T = TypeVar("T")
 
@@ -82,7 +83,7 @@ def get_random_port(port: Optional[int] = None) -> int:
         return s.getsockname()[1]
 
 
-class _PackagePath:
+class PackagePath:
     def __init__(self, package_path: str):
         self.package_path = package_path
         assert self.package_path.count(".") >= 2
@@ -92,7 +93,7 @@ class _PackagePath:
         return self.package_path
 
 
-def get_package_path(file: str):
+def get_package_path(file: str) -> PackagePath:
     """
     Usage:
         {source}/pages/components/sample/pages.py
@@ -104,7 +105,7 @@ def get_package_path(file: str):
     relative_path = relative_path.replace("/", ".")
     res = relative_path[: -len(extension)]
     assert res.startswith("pages.components")
-    return _PackagePath(res)
+    return PackagePath(res)
 
 
 def catch_unhandled_exception(func):
@@ -170,6 +171,11 @@ class APIService(Generic[T]):
     def lists(self) -> List[T]:
         this = self
         return self._document_class.objects.all()
+
+
+class Module(ABC):
+    @abstractmethod
+    def call(self): ...
 
 
 if __name__ == '__main__':
