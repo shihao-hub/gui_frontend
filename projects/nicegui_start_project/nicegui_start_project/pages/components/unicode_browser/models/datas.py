@@ -6,6 +6,6 @@ from dataclasses import dataclass, asdict
 
 
 @dataclass
-class UserRecord:
+class UserData:
     name: str
     password: str

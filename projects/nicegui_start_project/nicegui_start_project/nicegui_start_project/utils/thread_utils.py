@@ -3,8 +3,6 @@ __all__ = ["thread_pool"]
 import os
 from concurrent import futures
 
-from loguru import logger
-
 
 # singleton thread pool
 class _ThreadPool:
@@ -30,19 +28,3 @@ class _ThreadPool:
 
 
 thread_pool = _ThreadPool()
-
-if __name__ == '__main__':
-    def test_ThreadPool():  # NOQA
-        class A:
-            pass
-
-        logger.info(A())
-        logger.info(A())
-        logger.info(A())
-        logger.info(id(A()))
-        logger.info(A() is A())
-        logger.info(_ThreadPool() is _ThreadPool())
-        logger.info(f"{id(_ThreadPool())}\t{id(_ThreadPool())}")
-        assert id(_ThreadPool()) == id(_ThreadPool())  # 为什么始终成立？id 我记得是比较地址的呀... 《流畅的 Python》
-        assert _ThreadPool() is _ThreadPool()
-        # get_random_port

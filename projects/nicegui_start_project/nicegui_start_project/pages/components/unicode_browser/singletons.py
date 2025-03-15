@@ -15,7 +15,7 @@ from nicegui import ui
 from nicegui_start_project.utils import thread_pool, SingletonMeta
 from nicegui_start_project.settings import database_manager
 from .mediator import io_operation, thread_exception_handler
-from .models import UnicodeTranslation
+from .models import UnicodeTranslationEntity
 
 
 class RefreshNameLabelSingleton(metaclass=SingletonMeta):

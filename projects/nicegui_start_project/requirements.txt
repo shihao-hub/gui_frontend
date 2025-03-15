@@ -3,3 +3,7 @@ nicegui==2.11.0
 pydantic==2.10.6
 lxml==5.3.1
 mypy==1.15.0
+contracts # useless
+typeguard
+validators
+icontract # useless

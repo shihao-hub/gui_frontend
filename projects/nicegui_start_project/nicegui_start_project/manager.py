@@ -18,6 +18,7 @@
 """
 import abc
 import argparse
+import collections
 import shutil
 import sys
 import os
@@ -147,6 +148,60 @@ def handle_create_component_template(name: str):
     except Exception as e:
         logger.error(f"创建组件模板失败，原因：{e}")
         rollback()
+
+
+class HandleCreateModelsDir:
+    def __init__(self, target_dir: str):
+        self.target_dir = target_dir
+
+    @dataclass(frozen=True)
+    class LogicContext:
+        target: Path
+
+    @dataclass
+    class FileInfo:
+        filename: str
+        content: str
+
+    def _logic(self, context: LogicContext):
+        target = context.target
+
+        target.mkdir(parents=True)
+
+        file_infos = [
+            self.FileInfo(
+                filename="__init__.py",
+                content="""\
+    from .entities import *
+    """
+            ),
+
+        ]
+
+        info = file_infos[0]
+
+        filenames = ["__init__.py", "dtos.py", "entities.py", "datas.py", "schemas.py"]
+
+    def call(self):
+        target_dir = self.target_dir
+
+        target = Path(target_dir)
+        if target.exists():
+            logger.error(f"目标目录 {target_dir} 已存在")
+            return
+
+        try:
+            self._logic(self.LogicContext(
+                target=target
+            ))
+        except Exception as e:
+            logger.error(f"创建失败，原因：{e}")
+            if target.exists():
+                shutil.rmtree(f"{target}")
+
+
+def handle_create_models_dir(target_dir: str):
+    HandleCreateModelsDir(target_dir).call()
 
 
 def main():
