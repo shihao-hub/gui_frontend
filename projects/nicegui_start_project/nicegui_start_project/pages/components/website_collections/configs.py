@@ -23,5 +23,12 @@ WEBSITES = [
         description="",
         icon="",
         purpose="主要用于查看每日金价",
+    ),
+    Website(
+        name="如何高效阅读源代码",
+        url="https://catcoding.me/p/learn-from-source-code/",
+        description="",
+        icon="",
+        purpose="学习如何高效阅读源代码",
     )
 ]
