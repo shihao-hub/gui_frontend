@@ -17,6 +17,8 @@ def xlsx2csv(filepath: str) -> io.BytesIO:
     return res
 
 
+# Note: 推荐创建多个项目组合，比如一个接口仓作为第三方库
+
 def main():
     xlsx_files = [f"{XLSX_FILES_ROOT}/{name}" for name in os.listdir(XLSX_FILES_ROOT) if name.endswith(".xlsx")]
 
