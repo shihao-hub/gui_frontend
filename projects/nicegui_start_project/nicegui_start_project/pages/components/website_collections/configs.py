@@ -30,5 +30,12 @@ WEBSITES = [
         description="",
         icon="",
         purpose="学习如何高效阅读源代码",
+    ),
+    Website(
+        name="你都用 Python 来做什么？",
+        url="https://www.zhihu.com/question/20799742",
+        description="",
+        icon="",
+        purpose="了解大家用 Python 都在做什么",
     )
 ]
